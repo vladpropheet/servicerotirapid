@@ -59,6 +59,7 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 | `npm run db:generate` | Generează o migrare nouă după o modificare în `src/server/db/schema`. |
 | `npm run db:migrate` | Aplică migrările care nu au rulat încă și actualizează contul aplicației. Nu șterge date. |
 | `npm run db:seed` | Creează un service din catalog. Dacă există deja, nu modifică nimic. |
+| `npm run gdpr:retention` | Șterge datele mai vechi decât perioada de păstrare a fiecărui service (GDPR) și sesiunile / linkurile expirate. Se poate rula de mai multe ori. În producție rulează zilnic (Faza 7). |
 | `npm run lint` / `npm run typecheck` | Verifică codul. |
 | `docker compose stop` | Oprește baza de date (datele rămân). |
 
@@ -67,6 +68,8 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 - Aplicația se conectează cu contul `app_user`, care **nu poate ocoli Row-Level Security**: fiecare service vede doar datele lui, chiar dacă o interogare din cod ar uita filtrul. Migrările rulează cu contul proprietar (`MIGRATION_DATABASE_URL`). În producție, serverul refuză să pornească dacă `DATABASE_URL` are drepturi de administrator.
 - Parolele: argon2id. După 5 încercări greșite contul se blochează 15 minute. Parola uitată: super-adminul dă o parolă temporară nouă (fără SMS).
 - Super-adminul are obligatoriu verificare în doi pași (aplicație de autentificare pe telefon).
+- Formularul de programare: limite de cereri pe IP și pe telefon + Cloudflare Turnstile (gratuit; oprit în dezvoltare dacă lipsesc cheile).
+- Lista completă, cu ce e făcut și ce rămâne: [docs/securitate.md](docs/securitate.md).
 
 ## Structura
 
@@ -76,6 +79,8 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 - `src/server/auth/` — logare, parole, sesiuni (Better Auth).
 - `src/server/admin/` — funcțiile panoului de administrare (toate primesc tranzacția unui service).
 - `src/server/booking/` — rezervarea atomică și linkul „vezi / anulează”.
+- `src/server/security/` — limite de cereri, Cloudflare Turnstile, verificările de la pornire.
+- `src/server/gdpr/` — export CSV, ștergerea datelor unui client, ștergerea automată.
 - `src/app/[slug]/` — pagina publică de programare; `src/app/admin/` — panoul patronului; `src/app/superadmin/` — Propheet AIgency.
 - `drizzle/` — migrările SQL (versionate în Git).
 - `storage/` — pozele încărcate (nu intră în Git; în producție: volum inclus în backup).
