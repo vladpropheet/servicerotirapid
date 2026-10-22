@@ -1,0 +1,53 @@
+# Mediul de dezvoltare local. NU se folosește în producție (acolo e Coolify, Faza 7).
+#
+#   docker compose up -d                  -> pornește doar baza de date (aplicația rulează cu `npm run dev`)
+#   docker compose --profile app up -d    -> pornește și aplicația într-un container
+#
+# Parola bazei de date se citește din fișierul .env (care nu intră în Git).
+name: servicerotirapid
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Lipsește POSTGRES_PASSWORD din .env}
+      POSTGRES_DB: servicerotirapid
+    ports:
+      # Legat doar de calculatorul tău (127.0.0.1), nu de rețea.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Scripturile din acest folder rulează o singură dată, la prima pornire (creează baza de teste).
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d servicerotirapid"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    profiles: ["app"]
+    image: node:24-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --hostname 0.0.0.0"
+    environment:
+      DATABASE_URL: postgres://app:${POSTGRES_PASSWORD}@db:5432/servicerotirapid
+      APP_BASE_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Pe Windows, modificările de fișiere nu ajung singure în container; le verificăm periodic.
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+      # node_modules pentru Linux stă separat de cel din Windows.
+      - app_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  app_node_modules:
