@@ -29,7 +29,10 @@ async function currentRequestHeaders(): Promise<Headers> {
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await getAuth().api.getSession({ headers: await currentRequestHeaders() });
+  // Întâi antetele cererii: la build (fără cerere și fără variabile de mediu) Next.js se oprește aici,
+  // înainte de inițializarea autentificării.
+  const requestHeaders = await currentRequestHeaders();
+  const session = await getAuth().api.getSession({ headers: requestHeaders });
   if (!session) return null;
   const user = session.user as typeof session.user & {
     username?: string | null;

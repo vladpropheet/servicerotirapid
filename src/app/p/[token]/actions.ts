@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { cancelBookingByToken } from "@/server/booking/manage";
-import { clientIp, hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
+import { clientIp } from "@/server/security/client-ip";
+import { hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
 
 export type CancelActionState = { error: string | null };
 

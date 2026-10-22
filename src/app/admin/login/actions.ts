@@ -5,7 +5,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuth } from "@/server/auth/auth";
 import { phoneToUsername } from "@/server/auth/users";
-import { clientIp, hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
+import { clientIp } from "@/server/security/client-ip";
+import { hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
 
 export type FormState = { error: string | null };
 

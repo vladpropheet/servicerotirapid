@@ -14,7 +14,8 @@ import {
   loadScheduleContext,
   loadTenantInfo,
 } from "@/server/repos/booking-data";
-import { clientIp, hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
+import { clientIp } from "@/server/security/client-ip";
+import { hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
 import { verifyTurnstile } from "@/server/security/turnstile";
 import { resolvePublicTenant, withTenant } from "@/server/tenant";
 
