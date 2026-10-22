@@ -1,0 +1,41 @@
+# Dependențe
+node_modules/
+.pnp
+.pnp.*
+
+# Build Next.js
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+*.tsbuildinfo
+
+# Secrete și variabile de mediu: NU intră niciodată în Git.
+# Singura excepție este .env.example (nume de variabile cu valori false).
+.env
+.env.*
+!.env.example
+
+# Teste
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Loguri
+*.log
+npm-debug.log*
+
+# Fișiere de sistem
+.DS_Store
+Thumbs.db
+
+# Editoare
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Fișiere încărcate local (poza fațadei etc.) în dezvoltare
+/storage/

@@ -1,0 +1,9 @@
+# Toate fișierele text se salvează în Git cu terminații de linie Unix (LF),
+# ca să meargă la fel pe Windows, în Docker și pe serverul Linux.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
