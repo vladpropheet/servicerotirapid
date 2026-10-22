@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { SiteFooter } from "@/components/site-footer";
+import { FEATURES } from "@/lib/features";
 import { formatRoPhone } from "@/lib/format";
 import { loadTenantInfo } from "@/server/repos/booking-data";
 import { resolvePublicTenant, withTenant } from "@/server/tenant";
@@ -44,13 +45,18 @@ async function PrivacyContent({ params }: { params: PageProps<"/[slug]/confident
 
         <h2 className="mt-6 text-xl font-bold">Ce date colectăm și de ce</h2>
         <ul className="list-disc pl-6">
-          <li>Numele și telefonul: ca să facem programarea și să te anunțăm despre ea (confirmare, reamintire).</li>
+          <li>
+            Numele și telefonul: ca să facem programarea și să te putem suna dacă apare o schimbare
+            {FEATURES.smsNotifications ? " (și ca să-ți trimitem confirmarea și reamintirea prin SMS)" : ""}.
+          </li>
           <li>Numărul de înmatriculare (opțional): ca să recunoaștem mașina în service.</li>
           <li>Serviciile alese, ziua și ora: ca să pregătim lucrarea.</li>
         </ul>
         <p className="mt-2">
-          Temeiul este pregătirea și executarea serviciului cerut de tine. Mesajele de marketing (de exemplu
-          reamintirile sezoniere) le trimitem doar dacă ai bifat separat acordul, pe care îl poți retrage oricând.
+          Temeiul este pregătirea și executarea serviciului cerut de tine.
+          {FEATURES.marketingSms
+            ? " Mesajele de marketing (de exemplu reamintirile sezoniere) le trimitem doar dacă ai bifat separat acordul, pe care îl poți retrage oricând."
+            : " Nu folosim datele pentru reclame și nu le dăm altor firme."}
         </p>
 
         <h2 className="mt-6 text-xl font-bold">Cât timp păstrăm datele</h2>
@@ -59,7 +65,7 @@ async function PrivacyContent({ params }: { params: PageProps<"/[slug]/confident
         <h2 className="mt-6 text-xl font-bold">Drepturile tale</h2>
         <p>
           Poți cere oricând acces la datele tale, corectarea sau ștergerea lor, restricționarea prelucrării,
-          portabilitatea datelor, te poți opune prelucrării și îți poți retrage acordul pentru marketing. Pentru
+          portabilitatea datelor{FEATURES.marketingSms ? ", te poți opune prelucrării și îți poți retrage acordul pentru marketing" : " și te poți opune prelucrării"}. Pentru
           orice cerere, sună la {formatRoPhone(info.publicPhone)}. Ai dreptul să depui o plângere la Autoritatea
           Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP).
         </p>

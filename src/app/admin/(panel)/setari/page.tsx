@@ -6,6 +6,7 @@ import { ReviewPrompt } from "@/components/admin/review-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, Checkbox, Field, inputClass, PageTitle } from "@/components/admin/ui";
 import type { SmsTemplateKind } from "@/domain/enums";
+import { FEATURES } from "@/lib/features";
 import { getSettings, getSmsTemplates, SMS_VARIABLES } from "@/server/admin/schedule";
 import { requireAdmin } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
@@ -77,21 +78,29 @@ async function Content() {
             name="manualBookingsUseCapacity"
             defaultChecked={settings.manualBookingsUseCapacity}
           />
-          <Checkbox label="Trimite SMS de reamintire" name="reminderEnabled" defaultChecked={settings.reminderHoursBefore !== null} />
-          <Field label="Reamintirea pleacă cu câte ore înainte" name="reminderHoursBefore" type="number" inputMode="numeric" min={1} max={168} defaultValue={settings.reminderHoursBefore ?? 24} />
+          {FEATURES.smsNotifications && (
+            <>
+              <Checkbox label="Trimite SMS de reamintire" name="reminderEnabled" defaultChecked={settings.reminderHoursBefore !== null} />
+              <Field label="Reamintirea pleacă cu câte ore înainte" name="reminderHoursBefore" type="number" inputMode="numeric" min={1} max={168} defaultValue={settings.reminderHoursBefore ?? 24} />
+            </>
+          )}
           <Field label="Clientul poate anula din link cu cel puțin câte ore înainte" name="customerCancelCutoffHours" type="number" inputMode="decimal" min={0} max={168} step={0.5} defaultValue={settings.customerCancelCutoffMin / 60} />
           <Field label="Câte programări active poate avea același telefon" name="maxActiveBookingsPerPhone" type="number" inputMode="numeric" min={1} max={20} defaultValue={settings.maxActiveBookingsPerPhone} />
           <SubmitButton>Salvează setările</SubmitButton>
         </ActionForm>
       </Card>
 
-      <h2 className="font-display text-2xl font-bold uppercase">Textele SMS</h2>
-      <p>
-        Variabile: {SMS_VARIABLES.join(" ")}. Fără diacritice, un SMS are 160 de caractere; cu diacritice doar 70 (costă
-        mai mult). SMS-urile vor fi trimise după ce alegem furnizorul.
-      </p>
-      {smsReview && <ReviewPrompt target={{ type: "sms", kind: "*" }} note={smsReview.reviewNote} label="Textele sunt bune" />}
-      {templates.map((template) => (
+      {FEATURES.smsNotifications && (
+        <>
+          <h2 className="font-display text-2xl font-bold uppercase">Textele SMS</h2>
+          <p>
+            Variabile: {SMS_VARIABLES.join(" ")}. Fără diacritice, un SMS are 160 de caractere; cu diacritice doar 70
+            (costă mai mult).
+          </p>
+          {smsReview && <ReviewPrompt target={{ type: "sms", kind: "*" }} note={smsReview.reviewNote} label="Textele sunt bune" />}
+        </>
+      )}
+      {FEATURES.smsNotifications && templates.map((template) => (
         <Card key={template.kind}>
           <ActionForm action={updateSmsTemplateAction}>
             <input type="hidden" name="kind" value={template.kind} />

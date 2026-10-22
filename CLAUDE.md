@@ -105,7 +105,8 @@ Design de referință: **demo-ul aprobat** (fundal deschis #F6F5F2, text #18181B
 
 1. **Alege serviciul.** Lista pe categorii. Clientul alege tipul vehiculului, apoi mărimea jantei (cu opțiunea „nu știu”), tipul jantei, numărul de roți (implicit 4) și bifa Runflat dacă e cazul. Vede **prețul estimativ**, cu mențiunea „prețul final se stabilește în service”. Poate adăuga încă un serviciu. Serviciile care nu se programează online (de ex. reparațiile de pană) apar cu preț și cu butonul „Sună acum”, nu cu programare. **Diferența dintre „Schimb roți complete” și „Pachet complet anvelope” trebuie explicată clar pe ecran.**
 2. **Alege ziua și ora.** Se afișează doar intervalele libere, calculate din program, zile libere, intervale blocate, durata totală, capacitatea online, timpul minim înainte de programare și numărul maxim de zile înainte.
-3. **Date și confirmare.** Nume, telefon (validare format RO), nr. înmatriculare opțional, bifă obligatorie pentru prelucrarea datelor (cu link la politica de confidențialitate) și **bifă separată, nebifată implicit**, pentru mesaje de marketing (de ex. reamintiri sezoniere). Urmează ecranul de succes cu rezumatul și un link pentru anulare.
+3. **Date și confirmare.** Nume, telefon (validare format RO), nr. înmatriculare opțional, bifă obligatorie pentru prelucrarea datelor (cu link la politica de confidențialitate). Urmează ecranul de succes cu rezumatul și un link pentru anulare.
+   - *Decizie 22.10.2026:* **fără bifa de marketing prin SMS**, pentru că primul client nu a ales abonamentul lunar (vezi §7). Codul există, oprit din `src/lib/features.ts` (`marketingSms`); când se reactivează, bifa e separată și nebifată implicit.
 
 ### Fără suprapuneri
 
@@ -135,6 +136,8 @@ Mobile-first, instalabil pe ecranul telefonului (PWA). Totul în română, cu cu
 ---
 
 ## 7. Notificări
+
+> **Decizie 22.10.2026: în afara contractului actual.** Primul client nu a ales abonamentul lunar, deci **nu trimitem nimic**: fără SMS-uri (confirmare, reamintire, anunț către patron) și fără notificări push. Patronul vede programările noi și anulările în panou („Azi” / „Mâine”, calendar); clientul primește confirmarea și linkul de anulare pe ecranul de succes. Setările SMS sunt ascunse din panou (`src/lib/features.ts`, `smsNotifications: false`); tabelele `sms_templates` și `notifications_log` rămân în baza de date. Specificația de mai jos rămâne valabilă **doar dacă un client ia abonamentul**: atunci se construiește Faza 5 și se activează comutatoarele.
 
 - Construiește un **strat abstract de SMS** (o interfață `SmsProvider`). În dezvoltare și în teste folosește un provider care doar scrie în consolă sau log, **fără SMS-uri reale**. Adaptorul pentru un furnizor românesc (SMSLink sau SMSO) îl facem **doar după ce aleg furnizorul și îți dau cheia** prin variabile de mediu.
 - Mesaje:
@@ -190,11 +193,11 @@ La fiecare fază: branch nou (explică-mi ce e un branch), commit-uri mici cu me
 2. **Motorul de prețuri și disponibilitate:** funcții pure + teste unitare extinse (ora de vară, pauze, zile libere, capacitate, durate combinate, suprataxe, „nu știu mărimea”).
 3. **Fluxul public de programare** (cei 3 pași) + rezervare atomică + test cu cereri concurente + test Playwright.
 4. **Panoul de administrare** + autentificare + audit log + teste de izolare între tenanți.
-5. **Notificări:** strat SMS abstract (fără SMS-uri reale), reamintiri prin cron, anulare prin link.
+5. ~~**Notificări:** strat SMS abstract (fără SMS-uri reale), reamintiri prin cron, anulare prin link.~~ **Scoasă din contractul actual (22.10.2026), vezi §7.** Anularea prin link există deja (Faza 3). Se reia doar dacă un client ia abonamentul lunar.
 6. **Securitate și GDPR:** anti-spam, header-e, pagini legale, export și ștergere date, lista de verificare de securitate.
 7. **Producție:** Dockerfile final, ghid VPS + Coolify + backup, pas cu pas pentru mine.
 
-**În afara versiunii 1** (dar schema să le permită mai târziu): plăți online, hotel de anvelope, reamintiri sezoniere de marketing, cereri automate de recenzii Google, mai mulți angajați cu conturi proprii, raport lunar automat pe WhatsApp.
+**În afara versiunii 1** (dar schema să le permită mai târziu): plăți online, hotel de anvelope, reamintiri sezoniere de marketing, cereri automate de recenzii Google, mai mulți angajați cu conturi proprii, raport lunar automat pe WhatsApp, **notificări SMS și reamintiri (abonament lunar, vezi §7)**.
 
 ---
 

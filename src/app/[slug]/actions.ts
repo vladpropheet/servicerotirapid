@@ -5,6 +5,7 @@
 import { availableSlots, groupSlotsByDay } from "@/domain/availability";
 import { estimate, type EstimateErrorCode } from "@/domain/pricing";
 import { localDateOf, MINUTE_MS } from "@/domain/time";
+import { FEATURES } from "@/lib/features";
 import { bookingRequestSchema, selectionSchema } from "@/lib/validation/booking";
 import { reserveOnlineBooking } from "@/server/booking/reserve";
 import {
@@ -99,7 +100,8 @@ export async function createBookingAction(slug: string, input: unknown): Promise
         selection,
         startsAt,
         customer: { fullName: customer.fullName, phoneE164: customer.phone, plate: customer.plate },
-        marketingOptIn,
+        // Fără bifă în formular, serverul nu înregistrează niciun acord de marketing (chiar dacă cererea l-ar conține).
+        marketingOptIn: FEATURES.marketingSms && marketingOptIn,
         idempotencyKey,
       },
       { now: Date.now() },

@@ -14,6 +14,7 @@ import {
   type PricingSelection,
 } from "@/domain/pricing";
 import { MARKETING_CONSENT_TEXT, PRIVACY_CONSENT_TEXT } from "@/lib/consent-texts";
+import { FEATURES } from "@/lib/features";
 import { formatDayChip, formatDuration, formatLongDate, formatRoPhone, telHref } from "@/lib/format";
 import type { PublicCatalog, PublicService } from "@/lib/public-catalog";
 import { customerSchema } from "@/lib/validation/booking";
@@ -160,7 +161,7 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
         startsAt: slot.startsAt,
         customer: { fullName, phone, plate },
         privacyAccepted: true,
-        marketingOptIn,
+        marketingOptIn: FEATURES.marketingSms && marketingOptIn,
         idempotencyKey: idempotencyKey.current,
       });
       if (result.ok) {
@@ -565,17 +566,19 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
               </p>
             )}
 
-            <label className="flex cursor-pointer gap-3">
-              <input
-                type="checkbox"
-                className="mt-1 size-6 shrink-0 accent-accent"
-                checked={marketingOptIn}
-                onChange={(e) => setMarketingOptIn(e.target.checked)}
-              />
-              <span>
-                {MARKETING_CONSENT_TEXT} <span className="text-zinc-600">(opțional)</span>
-              </span>
-            </label>
+            {FEATURES.marketingSms && (
+              <label className="flex cursor-pointer gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-6 shrink-0 accent-accent"
+                  checked={marketingOptIn}
+                  onChange={(e) => setMarketingOptIn(e.target.checked)}
+                />
+                <span>
+                  {MARKETING_CONSENT_TEXT} <span className="text-zinc-600">(opțional)</span>
+                </span>
+              </label>
+            )}
 
             {formMessage && (
               <p role="alert" className="rounded-md bg-red-100 p-3 font-semibold text-red-900">

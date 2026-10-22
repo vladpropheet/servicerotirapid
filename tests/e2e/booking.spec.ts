@@ -43,8 +43,9 @@ test("clientul face o programare în 3 pași și o anulează din link", async ({
   await expect(page.getByText("Scrie un număr de mobil, de exemplu 0722 123 456.")).toBeVisible();
   await expect(page.getByText(/Bifează acordul pentru prelucrarea datelor/)).toBeVisible();
 
-  // Bifa de marketing e separată și nebifată implicit.
-  await expect(page.getByRole("checkbox", { name: /SMS-uri cu oferte/ })).not.toBeChecked();
+  // Fără abonament SMS (decizia din 22.10.2026): formularul nu cere acord de marketing.
+  await expect(page.getByRole("checkbox", { name: /SMS-uri cu oferte/ })).toHaveCount(0);
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
 
   await page.getByLabel("Nume și prenume").fill("Ion Popescu");
   await expect(page.getByText("Scrie numele tău (cel puțin 2 litere).")).toHaveCount(0);
@@ -83,6 +84,8 @@ test("politica de confidențialitate e generată din datele firmei", async ({ pa
   await expect(page.getByRole("heading", { name: "Politica de confidențialitate" })).toBeVisible();
   await expect(page.getByText("SC DANI ROCA SRL").first()).toBeVisible();
   await expect(page.getByText("persoană împuternicită", { exact: false })).toBeVisible();
+  await expect(page.getByText("Nu folosim datele pentru reclame", { exact: false })).toBeVisible();
+  await expect(page.getByText("marketing", { exact: false })).toHaveCount(0);
 });
 
 test("un service inexistent și un link fals dau mesaje clare", async ({ page }) => {

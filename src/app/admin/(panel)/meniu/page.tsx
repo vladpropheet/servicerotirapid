@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
 import { buttonClass, PageTitle } from "@/components/admin/ui";
+import { FEATURES } from "@/lib/features";
 import { requireAdmin } from "@/server/auth/session";
 import { logoutAction, logoutEverywhereAction } from "../../account-actions";
 
@@ -14,7 +15,7 @@ const LINKS = [
   { href: "/admin/servicii", label: "Servicii și prețuri" },
   { href: "/admin/suprataxe", label: "Suprataxe (Runflat, Off Road)" },
   { href: "/admin/dimensiuni", label: "Tipuri de mașini și jante" },
-  { href: "/admin/setari", label: "Setări programări și SMS" },
+  { href: "/admin/setari", label: FEATURES.smsNotifications ? "Setări programări și SMS" : "Setări programări" },
   { href: "/admin/firma", label: "Datele firmei și poza" },
   { href: "/admin/de-verificat", label: "De verificat" },
   { href: "/admin/istoric", label: "Istoric modificări" },

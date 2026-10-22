@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import type { FormResult } from "@/components/admin/action-form";
 import { CONFIRMATION_MODES, SMS_TEMPLATE_KINDS } from "@/domain/enums";
+import { FEATURES } from "@/lib/features";
 import { updateSettings, updateSmsTemplate } from "@/server/admin/schedule";
 import { auditActor, requireAdmin } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
@@ -18,7 +19,8 @@ const settingsSchema = z.object({
   confirmationMode: z.enum(CONFIRMATION_MODES),
   manualBookingsUseCapacity: z.boolean(),
   reminderEnabled: z.boolean(),
-  reminderHoursBefore: int(1, 168, "Reamintirea: între 1 și 168 de ore."),
+  // Lipsește din formular cât timp SMS-urile sunt oprite: atunci valoarea salvată rămâne neschimbată.
+  reminderHoursBefore: int(1, 168, "Reamintirea: între 1 și 168 de ore.").optional(),
   customerCancelCutoffHours: z.coerce.number({ error: "Anularea: în ore." }).min(0).max(168),
   maxActiveBookingsPerPhone: int(1, 20, "Programări active pe telefon: între 1 și 20."),
 });
@@ -40,7 +42,7 @@ export async function updateSettingsAction(_previous: FormResult, formData: Form
       maxDaysAhead: s.maxDaysAhead,
       confirmationMode: s.confirmationMode,
       manualBookingsUseCapacity: s.manualBookingsUseCapacity,
-      reminderHoursBefore: s.reminderEnabled ? s.reminderHoursBefore : null,
+      ...(FEATURES.smsNotifications ? { reminderHoursBefore: s.reminderEnabled ? (s.reminderHoursBefore ?? 24) : null } : {}),
       customerCancelCutoffMin: Math.round(s.customerCancelCutoffHours * 60),
       maxActiveBookingsPerPhone: s.maxActiveBookingsPerPhone,
     }),
@@ -52,6 +54,7 @@ export async function updateSettingsAction(_previous: FormResult, formData: Form
 
 export async function updateSmsTemplateAction(_previous: FormResult, formData: FormData): Promise<FormResult> {
   const ctx = await requireAdmin();
+  if (!FEATURES.smsNotifications) return { error: "SMS-urile nu sunt active pentru acest service." };
   const parsed = z
     .object({
       kind: z.enum(SMS_TEMPLATE_KINDS),

@@ -1,5 +1,6 @@
 import "server-only";
 import { and, eq, sql } from "drizzle-orm";
+import { FEATURES } from "@/lib/features";
 import { businessHours, servicePrices, services, smsTemplates, surcharges, tenants } from "@/server/db/schema";
 import type { TenantTx } from "@/server/tenant";
 import { writeAudit, type Actor } from "./audit";
@@ -35,6 +36,8 @@ export async function listReviewItems(t: TenantTx): Promise<ReviewItem[]> {
   const items: ReviewItem[] = [];
   const [tenant] = await t.tx.select({ reviewFields: tenants.reviewFields }).from(tenants).where(eq(tenants.id, t.tenantId));
   for (const field of tenant?.reviewFields ?? []) {
+    // Limita de SMS-uri contează doar dacă SMS-urile sunt active.
+    if (field === "sms_monthly_limit" && !FEATURES.smsNotifications) continue;
     items.push({ target: { type: "tenant", field }, title: TENANT_FIELD_LABEL[field] ?? field, note: null, href: "/admin/firma" });
   }
 
@@ -82,12 +85,14 @@ export async function listReviewItems(t: TenantTx): Promise<ReviewItem[]> {
     .limit(1);
   if (hours) items.push({ target: { type: "hours" }, title: "Programul de lucru", note: hours.note, href: "/admin/program" });
 
-  const sms = await t.tx
-    .select({ kind: smsTemplates.kind, note: smsTemplates.reviewNote })
-    .from(smsTemplates)
-    .where(and(eq(smsTemplates.tenantId, t.tenantId), eq(smsTemplates.needsReview, true)));
-  if (sms.length > 0) {
-    items.push({ target: { type: "sms", kind: "*" }, title: `Textele SMS (${sms.length})`, note: sms[0]?.note ?? null, href: "/admin/setari" });
+  if (FEATURES.smsNotifications) {
+    const sms = await t.tx
+      .select({ kind: smsTemplates.kind, note: smsTemplates.reviewNote })
+      .from(smsTemplates)
+      .where(and(eq(smsTemplates.tenantId, t.tenantId), eq(smsTemplates.needsReview, true)));
+    if (sms.length > 0) {
+      items.push({ target: { type: "sms", kind: "*" }, title: `Textele SMS (${sms.length})`, note: sms[0]?.note ?? null, href: "/admin/setari" });
+    }
   }
   return items;
 }

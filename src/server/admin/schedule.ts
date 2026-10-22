@@ -63,7 +63,8 @@ export type SettingsInput = {
   maxDaysAhead: number;
   confirmationMode: ConfirmationMode;
   manualBookingsUseCapacity: boolean;
-  reminderHoursBefore: number | null;
+  /** Lipsă = rămâne cum e (câmpul e ascuns cât timp SMS-urile sunt oprite). */
+  reminderHoursBefore?: number | null;
   customerCancelCutoffMin: number;
   maxActiveBookingsPerPhone: number;
 };
