@@ -1,0 +1,262 @@
+{
+  "_info": {
+    "descriere": "Catalogul de servicii si preturi pentru Service Roti Rapid (Pitesti), extras din afisele de tarife din service. Este datele de pornire ale aplicatiei; dupa lansare, patronul le modifica singur din panoul de administrare.",
+    "moneda": "RON",
+    "sursa": "Afise tarife din service (poze primite 22.10.2026) + fatada din Google Business Profile",
+    "atentie": "Campurile cu \"de_confirmat\": true sau valoare null trebuie verificate cu patronul inainte de lansare."
+  },
+
+  "firma": {
+    "nume_afisat": "Service Roți Rapid",
+    "nume_google_maps": "Vulcanizare Auto",
+    "nume_nota": "Pe fațadă scrie „Service Roți Rapid”, pe Google Maps „Vulcanizare Auto”. De confirmat ce nume se afișează în aplicație.",
+    "oras": "Pitești",
+    "denumire_legala": "SC DANI ROCA SRL",
+    "cui": "4834157",
+    "nr_reg_com": "J03/2366/27.09.1993",
+    "adresa_punct_lucru": "Bulevardul Petrochimiștilor 1A, 110167 Pitești, Argeș",
+    "adresa_sediu_social": null,
+    "adresa_sediu_social_nota": "De luat din registrul ONRC (necesară în politica GDPR).",
+    "telefon_public": "0766 777 130",
+    "telefon_admin": "0766 777 130",
+    "telefon_admin_nota": "Singurul utilizator al panoului de administrare (patronul) se autentifică cu acest număr.",
+    "email": null,
+    "google_maps_rating": "4,7 (153 recenzii, la 22.10.2026)",
+    "program": {
+      "sursa": "Google Maps, 22.10.2026 — de confirmat; editabil din admin",
+      "luni":     [{ "de_la": "08:00", "pana_la": "18:00" }],
+      "marti":    [{ "de_la": "08:00", "pana_la": "18:00" }],
+      "miercuri": [{ "de_la": "08:00", "pana_la": "18:00" }],
+      "joi":      [{ "de_la": "08:00", "pana_la": "18:00" }],
+      "vineri":   [{ "de_la": "08:00", "pana_la": "18:00" }],
+      "sambata":  [{ "de_la": "08:00", "pana_la": "17:00" }],
+      "duminica": []
+    }
+  },
+
+  "dimensiuni": {
+    "tipuri_vehicul": [
+      { "id": "autoturism", "nume": "Autoturism" },
+      { "id": "suv", "nume": "SUV / Jeep" },
+      { "id": "autoutilitara", "nume": "Autoutilitară" }
+    ],
+    "marimi_janta": ["12-16", "17", "18", "19", "20", "21", "22"],
+    "tipuri_janta": [
+      { "id": "tabla", "nume": "Tablă" },
+      { "id": "aliaj", "nume": "Aliaj" }
+    ]
+  },
+
+  "suprataxe_pe_roata": [
+    { "id": "runflat", "nume": "Anvelope Runflat", "pret": 10, "se_aplica_la": ["pachet_complet", "montat_demontat_roata", "schimb_anvelopa", "echilibrat", "snur", "petec", "petic_radial"] },
+    { "id": "offroad_montaj_special", "nume": "Off Road / jante cu montaj special", "pret": 20, "nota": "în funcție de complexitate", "se_aplica_la": ["pachet_complet", "montat_demontat_roata", "schimb_anvelopa", "echilibrat"] }
+  ],
+
+  "categorii": [
+    { "id": "vulcanizare", "nume": "Vulcanizare" },
+    { "id": "geometrie", "nume": "Geometrie roți 3D" },
+    { "id": "pana", "nume": "Reparații pană" },
+    { "id": "diverse", "nume": "Alte servicii" }
+  ],
+
+  "servicii": [
+    {
+      "id": "pachet_complet",
+      "categorie": "vulcanizare",
+      "nume": "Pachet complet anvelope (pe roată)",
+      "include": "Demontat roată, demontat anvelopa existentă, montat anvelopa nouă, echilibrat roată, plumbi, montat roată",
+      "unitate": "roată",
+      "programabil_online": true,
+      "durata_min_estimata": null,
+      "durata_nota": "de confirmat: durata pentru 4 roți",
+      "pret_dupa": ["tip_vehicul", "marime_janta", "tip_janta"],
+      "preturi": {
+        "autoturism":    { "13-16": { "tabla": 40, "aliaj": 45 }, "17": { "aliaj": 55 }, "18": { "aliaj": 60 }, "19": { "aliaj": 65 }, "20": { "aliaj": 70 }, "21": { "aliaj": 75 }, "22": { "aliaj": 80 } },
+        "suv":           { "13-16": { "tabla": 50, "aliaj": 55 }, "17": { "aliaj": 60 }, "18": { "aliaj": 65 }, "19": { "aliaj": 70 }, "20": { "aliaj": 80 }, "21": { "aliaj": 85 }, "22": { "aliaj": 90 } },
+        "autoutilitara": { "13-16": { "tabla": 55, "aliaj": 60 }, "17": { "aliaj": 60 }, "18": { "aliaj": 65 }, "19": { "aliaj": 65 }, "20": null, "21": null, "22": null }
+      },
+      "nota": "Pe afiș, la acest pachet prima coloană e 13\"-16\" (la celelalte servicii e 12\"-16\")."
+    },
+    {
+      "id": "montat_demontat_roata",
+      "categorie": "vulcanizare",
+      "nume": "Montat / demontat roată (schimb roți complete)",
+      "unitate": "roată",
+      "programabil_online": true,
+      "durata_min_estimata": null,
+      "pret_dupa": ["tip_vehicul", "marime_janta"],
+      "preturi": {
+        "autoturism":    { "13-16": 20, "17": 20, "18": 20, "19": 20, "20": 25, "21": 25, "22": 25 },
+        "suv":           { "13-16": 25, "17": 25, "18": 25, "19": 25, "20": 30, "21": 30, "22": 30 },
+        "autoutilitara": { "13-16": 25, "17": 25, "18": null, "19": null, "20": null, "21": null, "22": null }
+      },
+      "de_confirmat": true,
+      "nota_confirmare": "Câteva valori sunt scrise cu roșu/șterse pe afiș (autoturism 13-17\", SUV 13-17\", autoutilitară). Le-am citit ca 20/25 lei; de confirmat."
+    },
+    {
+      "id": "schimb_anvelopa",
+      "categorie": "vulcanizare",
+      "nume": "Schimb anvelopă pe jantă",
+      "unitate": "roată",
+      "programabil_online": true,
+      "durata_min_estimata": null,
+      "pret_dupa": ["tip_vehicul", "marime_janta"],
+      "preturi": {
+        "autoturism":    { "12-16": 20, "17": 25, "18": 30, "19": 35, "20": 40, "21": 45, "22": 50 },
+        "suv":           { "12-16": 20, "17": 25, "18": 30, "19": 35, "20": 40, "21": 45, "22": 50 },
+        "autoutilitara": { "12-16": 25, "17": 25, "18": 25, "19": 25, "20": null, "21": null, "22": null }
+      }
+    },
+    {
+      "id": "echilibrat",
+      "categorie": "vulcanizare",
+      "nume": "Echilibrat roată",
+      "unitate": "roată",
+      "programabil_online": true,
+      "durata_min_estimata": null,
+      "pret_dupa": ["tip_vehicul", "tip_janta"],
+      "preturi": {
+        "autoturism":    { "tabla": 15, "aliaj": 20 },
+        "suv":           { "tabla": 20, "aliaj": 25 },
+        "autoutilitara": { "tabla": 20, "aliaj": 25 }
+      }
+    },
+    {
+      "id": "geometrie_punte_fata",
+      "categorie": "geometrie",
+      "nume": "Geometrie punte față",
+      "unitate": "serviciu",
+      "programabil_online": true,
+      "durata_min": 15,
+      "durata_sursa": "confirmat de patron",
+      "pret_dupa": ["tip_vehicul"],
+      "preturi": { "autoturism": 140, "suv": 160, "autoutilitara": 180 }
+    },
+    {
+      "id": "geometrie_punte_spate",
+      "categorie": "geometrie",
+      "nume": "Geometrie punte spate",
+      "unitate": "serviciu",
+      "programabil_online": true,
+      "durata_min_estimata": null,
+      "pret_dupa": ["tip_vehicul"],
+      "preturi": { "autoturism": 130, "suv": 140, "autoutilitara": null }
+    },
+    {
+      "id": "geometrie_fata_spate",
+      "categorie": "geometrie",
+      "nume": "Reglaj geometrie față + spate",
+      "unitate": "serviciu",
+      "programabil_online": true,
+      "durata_min": 45,
+      "durata_sursa": "confirmat de patron",
+      "pret_dupa": ["tip_vehicul"],
+      "preturi": { "autoturism": 240, "suv": 270, "autoutilitara": null }
+    },
+    {
+      "id": "geometrie_off_road",
+      "categorie": "geometrie",
+      "nume": "Geometrie Off Road",
+      "unitate": "serviciu",
+      "programabil_online": true,
+      "durata_min_estimata": null,
+      "pret_fix": 180,
+      "nota": "Pe afiș apare în coloana Autoutilitară."
+    },
+    {
+      "id": "deblocare_bieleta",
+      "categorie": "geometrie",
+      "nume": "Deblocare bieletă ruginită",
+      "unitate": "bucată",
+      "programabil_online": false,
+      "pret_fix": 10,
+      "nota": "Supliment, se adaugă la service dacă e nevoie."
+    },
+    {
+      "id": "reglaj_unghi_amortizor",
+      "categorie": "geometrie",
+      "nume": "Reglaj unghi din amortizor",
+      "unitate": "bucată",
+      "programabil_online": false,
+      "pret_fix": 30,
+      "nota": "Supliment, se adaugă la service dacă e nevoie."
+    },
+    {
+      "id": "snur",
+      "categorie": "pana",
+      "nume": "Reparație pană cu șnur (dop)",
+      "unitate": "roată",
+      "programabil_online": false,
+      "pret_dupa": ["tip_vehicul", "marime_janta"],
+      "preturi": {
+        "autoturism":    { "12-16": 40, "17": 40, "18": 40, "19": 40, "20": 45, "21": 45, "22": 45 },
+        "suv":           { "12-16": 45, "17": 45, "18": 45, "19": 45, "20": 50, "21": 50, "22": 50 },
+        "autoutilitara": { "12-16": 50, "17": null, "18": null, "19": null, "20": null, "21": null, "22": null }
+      }
+    },
+    {
+      "id": "petec",
+      "categorie": "pana",
+      "nume": "Reparație pană cu petec",
+      "include": "Demontat roată, demontat anvelopa, aplicare petec, montat anvelopa, montat roată",
+      "unitate": "roată",
+      "programabil_online": false,
+      "pret_dupa": ["tip_vehicul", "marime_janta"],
+      "preturi": {
+        "autoturism":    { "12-16": 45, "17": 50, "18": 55, "19": 60, "20": 65, "21": 70, "22": 75 },
+        "suv":           { "12-16": 50, "17": 55, "18": 60, "19": 65, "20": 70, "21": 75, "22": 80 },
+        "autoutilitara": { "12-16": 60, "17": null, "18": null, "19": null, "20": null, "21": null, "22": null }
+      }
+    },
+    {
+      "id": "petic_radial",
+      "categorie": "pana",
+      "nume": "Reparație cu petic radial",
+      "include": "Demontat roată, demontat anvelopa, aplicare petec, montat anvelopa, montat roată",
+      "unitate": "roată",
+      "programabil_online": false,
+      "pret_dupa": ["tip_vehicul", "marime_janta"],
+      "preturi": {
+        "autoturism":    { "12-16": 55, "17": null, "18": null, "19": null, "20": 75, "21": 80, "22": 85 },
+        "suv":           { "12-16": 60, "17": null, "18": null, "19": null, "20": 80, "21": 85, "22": 90 },
+        "autoutilitara": { "12-16": 70, "17": null, "18": null, "19": null, "20": null, "21": null, "22": null }
+      },
+      "de_confirmat": true,
+      "nota_confirmare": "Valorile pentru 17\", 18\", 19\" sunt acoperite/șterse pe afiș. După tiparul tabelului ar fi probabil 60/65/70 (autoturism) și 65/70/75 (SUV), dar trebuie confirmate."
+    },
+    { "id": "presiune_aer",            "categorie": "diverse", "nume": "Presiune aer",                         "unitate": "roată",   "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 2,   "suv": 2,   "autoutilitara": 2.5 } },
+    { "id": "presiune_azot",           "categorie": "diverse", "nume": "Presiune azot",                        "unitate": "roată",   "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 2.5, "suv": 2.5, "autoutilitara": 2.5 } },
+    { "id": "azot_vacumare",           "categorie": "diverse", "nume": "Încărcare azot cu vacumare",           "unitate": "roată",   "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 15,  "suv": 15,  "autoutilitara": 15 } },
+    { "id": "valva_cauciuc",           "categorie": "diverse", "nume": "Valvă cauciuc",                        "unitate": "bucată",  "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 5,   "suv": 5,   "autoutilitara": 5 } },
+    { "id": "valva_senzor",            "categorie": "diverse", "nume": "Valvă pentru senzor",                  "unitate": "bucată",  "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 30,  "suv": 30,  "autoutilitara": 30 } },
+    { "id": "jet_apa_degresare",       "categorie": "diverse", "nume": "Jet apă / degresare roată",            "unitate": "roată",   "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": "5 / 10", "suv": "5 / 10", "autoutilitara": 10 }, "de_confirmat": true, "nota_confirmare": "Pe afiș apare „5 / 10 lei”: probabil jet apă 5 lei, degresare 10 lei. De confirmat." },
+    { "id": "periat_rugina",           "categorie": "diverse", "nume": "Periat rugină / calamină",             "unitate": "roată",   "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 5,   "suv": 5,   "autoutilitara": 5 } },
+    { "id": "curatare_butuc",          "categorie": "diverse", "nume": "Curățare butuc + spray de cupru",      "unitate": "roată",   "programabil_online": false, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 5,   "suv": 5,   "autoutilitara": 5 } },
+    { "id": "indreptat_janta_tabla",   "categorie": "diverse", "nume": "Îndreptat jantă tablă",                "unitate": "bucată",  "programabil_online": true,  "durata_min_estimata": null, "pret_dupa": ["tip_vehicul"], "preturi": { "autoturism": 10,  "suv": 10,  "autoutilitara": 10 } },
+    { "id": "indreptat_janta_aliaj",   "categorie": "diverse", "nume": "Îndreptat jantă aliaj",                "unitate": "bucată",  "programabil_online": true,  "durata_min_estimata": null, "pret_interval": { "min": 100, "max": 150 } },
+    { "id": "saci_anvelope",           "categorie": "diverse", "nume": "Saci anvelope",                        "unitate": "bucată",  "programabil_online": false, "pret_fix": 4 },
+    { "id": "senzor_presiune",         "categorie": "diverse", "nume": "Montare / înlocuire senzor presiune",  "unitate": "bucată",  "programabil_online": false, "pret_fix": 5 }
+  ],
+
+  "servicii_de_pe_fatada_fara_pret": [
+    "Polish profesional 3M",
+    "Corecție lac",
+    "Polish faruri",
+    "Curățare tapițerie auto",
+    "Igienizare mirosuri neplăcute",
+    "Încărcare cu freon (AC)",
+    "Rectificat înfundături caroserie"
+  ],
+
+  "setari_programare_implicite": {
+    "_nota": "Valori de pornire propuse de noi. Patronul le poate schimba oricând din admin.",
+    "capacitate_programari_online": 1,
+    "capacitate_nota": "Confirmat de patron: maxim 1 mașină programată online în același timp; restul posturilor rămân pentru clienții veniți fără programare. Editabil din admin.",
+    "durate_implicite_nota": "Unde durata_min este null, aplicația folosește o estimare propusă (vezi promptul agentului) până o setează patronul din admin.",
+    "pas_intervale_min": 15,
+    "programare_cu_cel_putin_ore_inainte": 2,
+    "programare_cel_mult_zile_inainte": 30,
+    "confirmare": "automata",
+    "reamintire_sms_ore_inainte": 24
+  }
+}
