@@ -64,8 +64,15 @@ export async function updateTenantProfile(t: TenantTx, actor: Actor, input: Prof
 
 export const MAX_FACADE_BYTES = 5 * 1024 * 1024;
 
-function storageRoot(): string {
-  return path.resolve(process.env.STORAGE_DIR ?? "./storage");
+const STORAGE_KEY = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/;
+
+/**
+ * Fișierele încărcate stau în folderul „storage” al aplicației (în producție: un volum Docker inclus în backup).
+ * Calea e fixă (process.cwd()/storage), ca build-ul să nu includă tot proiectul în server.
+ */
+function storagePath(storageKey: string): string {
+  if (!STORAGE_KEY.test(storageKey)) throw new Error("Cale de fișier invalidă.");
+  return path.join(process.cwd(), "storage", storageKey);
 }
 
 /** Tipul imaginii după primii octeți (nu după numele fișierului sau ce declară browserul). */
@@ -85,7 +92,7 @@ export async function saveFacade(t: TenantTx, actor: Actor, bytes: Uint8Array): 
 
   // Calea o alege serverul: id-ul tenantului + un id aleator. Nimic din numele fișierului trimis.
   const storageKey = `${t.tenantId}/${randomUUID()}.${type.ext}`;
-  const target = path.join(storageRoot(), storageKey);
+  const target = storagePath(storageKey);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, bytes);
 
@@ -102,7 +109,7 @@ export async function saveFacade(t: TenantTx, actor: Actor, bytes: Uint8Array): 
       .delete(media)
       .where(and(eq(media.tenantId, t.tenantId), eq(media.id, before.facadeMediaId)))
       .returning({ storageKey: media.storageKey });
-    if (old) await rm(path.join(storageRoot(), old.storageKey), { force: true });
+    if (old) await rm(storagePath(old.storageKey), { force: true });
   }
   await writeAudit(t, actor, {
     action: "facade.update",
@@ -124,7 +131,7 @@ export async function readFacade(t: TenantTx): Promise<{ bytes: Buffer; contentT
     .limit(1);
   if (!row) return null;
   try {
-    const bytes = await readFile(path.join(storageRoot(), row.storageKey));
+    const bytes = await readFile(storagePath(row.storageKey));
     return { bytes, contentType: row.contentType, id: row.id };
   } catch {
     return null;
