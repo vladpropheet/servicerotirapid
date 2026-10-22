@@ -33,7 +33,8 @@ services:
     working_dir: /app
     command: sh -c "npm ci && npm run dev -- --hostname 0.0.0.0"
     environment:
-      DATABASE_URL: postgres://app:${POSTGRES_PASSWORD}@db:5432/servicerotirapid
+      # Contul aplicației (app_user), creat de `npm run db:migrate`.
+      DATABASE_URL: postgres://app_user:${APP_DB_PASSWORD}@db:5432/servicerotirapid
       APP_BASE_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: "1"
       # Pe Windows, modificările de fișiere nu ajung singure în container; le verificăm periodic.

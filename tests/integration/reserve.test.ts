@@ -2,6 +2,7 @@ import { and, count, eq } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeDb, getDb } from "@/server/db/client";
+import { closeOwnerDb, ownerDb } from "./owner-db";
 import {
   auditLog,
   bookingAccessTokens,
@@ -24,10 +25,13 @@ beforeAll(async () => {
   ids = await catalogIds(tenantId);
 });
 
-afterAll(() => closeDb());
+afterAll(async () => {
+  await closeDb();
+  await closeOwnerDb();
+});
 
 const countBookingsAt = async (tenant: string, startsAt: number) => {
-  const [row] = await getDb()
+  const [row] = await ownerDb()
     .select({ n: count() })
     .from(bookings)
     .where(and(eq(bookings.tenantId, tenant), eq(bookings.startsAt, new Date(startsAt))));
@@ -54,7 +58,7 @@ describe("rezervarea online", () => {
     expect(result.token).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(result.publicRef).toMatch(/^[A-Z2-9]{6}$/);
 
-    const [booking] = await getDb().select().from(bookings).where(eq(bookings.id, result.bookingId));
+    const [booking] = await ownerDb().select().from(bookings).where(eq(bookings.id, result.bookingId));
     expect(booking).toMatchObject({
       tenantId,
       status: "confirmed",
@@ -69,7 +73,7 @@ describe("rezervarea online", () => {
     });
     expect(booking!.endsAt.getTime() - booking!.startsAt.getTime()).toBe(105 * 60_000);
 
-    const items = await getDb().select().from(bookingItems).where(eq(bookingItems.bookingId, result.bookingId));
+    const items = await ownerDb().select().from(bookingItems).where(eq(bookingItems.bookingId, result.bookingId));
     expect(items.map((i) => [i.kind, i.codeSnapshot, i.lineMinBani])).toEqual(
       expect.arrayContaining([
         ["service", "pachet_complet", 20000],
@@ -78,16 +82,16 @@ describe("rezervarea online", () => {
       ]),
     );
 
-    const [token] = await getDb()
+    const [token] = await ownerDb()
       .select()
       .from(bookingAccessTokens)
       .where(eq(bookingAccessTokens.bookingId, result.bookingId));
     expect(token?.lookupHash).toBe(createHash("sha256").update(result.token).digest("hex"));
 
-    const consents = await getDb().select().from(customerConsents).where(eq(customerConsents.bookingId, result.bookingId));
+    const consents = await ownerDb().select().from(customerConsents).where(eq(customerConsents.bookingId, result.bookingId));
     expect(consents.map((c) => c.purpose)).toEqual(["privacy_notice"]);
 
-    const audit = await getDb().select().from(auditLog).where(eq(auditLog.entityId, result.bookingId));
+    const audit = await ownerDb().select().from(auditLog).where(eq(auditLog.entityId, result.bookingId));
     expect(audit[0]).toMatchObject({ action: "booking.create", actorKind: "customer" });
     expect(JSON.stringify(audit[0]?.after)).not.toContain("Popescu");
   });
@@ -146,7 +150,7 @@ describe("rezervarea online", () => {
     expect((await make(1)).ok).toBe(true);
     expect(await make(2)).toMatchObject({ ok: false, error: "too_many_bookings" });
 
-    const [customer] = await getDb()
+    const [customer] = await ownerDb()
       .select()
       .from(customers)
       .where(and(eq(customers.tenantId, tenantId), eq(customers.phoneE164, phone)));
@@ -160,12 +164,12 @@ describe("rezervarea online", () => {
     await reserveOnlineBooking(tenantId, bookingRequest(ids, { startsAt: day, customer: base, marketingOptIn: true }), { now: NOW });
     await reserveOnlineBooking(tenantId, bookingRequest(ids, { startsAt: day + HOUR, customer: base, marketingOptIn: false }), { now: NOW });
 
-    const [customer] = await getDb()
+    const [customer] = await ownerDb()
       .select()
       .from(customers)
       .where(and(eq(customers.tenantId, tenantId), eq(customers.phoneE164, phone)));
     expect(customer?.marketingSmsOptIn).toBe(true);
-    const consents = await getDb().select().from(customerConsents).where(eq(customerConsents.customerId, customer!.id));
+    const consents = await ownerDb().select().from(customerConsents).where(eq(customerConsents.customerId, customer!.id));
     expect(consents.filter((c) => c.purpose === "marketing_sms")).toHaveLength(1);
   });
 });
@@ -174,7 +178,7 @@ describe("confirmarea manuală", () => {
   it("programarea rămâne „în așteptare” și ocupă totuși locul", async () => {
     const manualTenant = await seedFreshTenant("rezervare-manuala");
     const manualIds = await catalogIds(manualTenant);
-    await getDb()
+    await ownerDb()
       .update(bookingSettings)
       .set({ confirmationMode: "manual" })
       .where(eq(bookingSettings.tenantId, manualTenant));

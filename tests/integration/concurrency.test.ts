@@ -3,21 +3,25 @@
 import { and, count, eq, ne } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeDb, getDb } from "@/server/db/client";
+import { closeOwnerDb, ownerDb } from "./owner-db";
 import { bookingSettings, bookings } from "@/server/db/schema";
 import { reserveOnlineBooking } from "@/server/booking/reserve";
 import { bookingRequest, catalogIds, FRIDAY_8, NOW, seedFreshTenant } from "./booking-helpers";
 
-afterAll(() => closeDb());
+afterAll(async () => {
+  await closeDb();
+  await closeOwnerDb();
+});
 
 async function race(slug: string, capacity: number) {
   const tenantId = await seedFreshTenant(slug);
   const ids = await catalogIds(tenantId);
-  await getDb().update(bookingSettings).set({ onlineCapacity: capacity }).where(eq(bookingSettings.tenantId, tenantId));
+  await ownerDb().update(bookingSettings).set({ onlineCapacity: capacity }).where(eq(bookingSettings.tenantId, tenantId));
 
   const requests = Array.from({ length: 20 }, () => bookingRequest(ids, { startsAt: FRIDAY_8 }));
   const results = await Promise.all(requests.map((r) => reserveOnlineBooking(tenantId, r, { now: NOW })));
 
-  const [stored] = await getDb()
+  const [stored] = await ownerDb()
     .select({ n: count() })
     .from(bookings)
     .where(and(eq(bookings.tenantId, tenantId), ne(bookings.status, "cancelled")));

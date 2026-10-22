@@ -8,6 +8,20 @@
       "when": 1792688457546,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792692584128,
+      "tag": "0001_auth_and_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792692587247,
+      "tag": "0002_row_level_security",
+      "breakpoints": true
     }
   ]
 }

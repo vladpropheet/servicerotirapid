@@ -38,6 +38,8 @@ export const tenants = pgTable(
     email: text("email"),
     timezone: text("timezone").notNull().default("Europe/Bucharest"),
     brand: jsonb("brand").$type<TenantBrand>().notNull().default({}),
+    /** Poza fațadei (tabelul `media`), încărcată de patron din admin. */
+    facadeMediaId: uuid("facade_media_id"),
     status: text("status", { enum: TENANT_STATUSES }).notNull().default("active"),
     smsMonthlyLimit: integer("sms_monthly_limit").notNull().default(200),
     retentionMonths: smallint("retention_months").notNull().default(24),

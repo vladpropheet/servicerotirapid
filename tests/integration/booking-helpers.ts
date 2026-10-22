@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
+import { ownerDb } from "./owner-db";
 import { rimSizes, rimTypes, services, surcharges, vehicleTypes } from "@/server/db/schema";
 import { mapCatalog } from "@/server/seed/map-catalog";
 import { seedTenant } from "@/server/seed/write-seed";
@@ -26,7 +27,7 @@ type CodeMap = Record<string, string>;
 export async function catalogIds(tenantId: string) {
   const toMap = (rows: { id: string; code: string }[]): CodeMap =>
     Object.fromEntries(rows.map((r) => [r.code, r.id]));
-  const db = getDb();
+  const db = ownerDb();
   const [vehicle, rimSize, rimType, service, surcharge] = await Promise.all([
     db.select({ id: vehicleTypes.id, code: vehicleTypes.code }).from(vehicleTypes).where(eq(vehicleTypes.tenantId, tenantId)),
     db.select({ id: rimSizes.id, code: rimSizes.code }).from(rimSizes).where(eq(rimSizes.tenantId, tenantId)),
