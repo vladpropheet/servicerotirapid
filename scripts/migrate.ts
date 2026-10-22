@@ -6,20 +6,25 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 
-// În producție (Faza 4+) migrările rulează cu contul proprietar al tabelelor.
-const url = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
-if (!url) {
-  console.error("Lipsește DATABASE_URL (sau MIGRATION_DATABASE_URL).");
-  process.exit(1);
+async function main(): Promise<void> {
+  // În producție (Faza 4+) migrările rulează cu contul proprietar al tabelelor.
+  const url = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("Lipsește DATABASE_URL (sau MIGRATION_DATABASE_URL).");
+  }
+
+  const pool = new Pool({ connectionString: url, max: 1 });
+  try {
+    await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
+  } finally {
+    await pool.end();
+  }
 }
 
-const pool = new Pool({ connectionString: url, max: 1 });
-try {
-  await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
-  console.log("Migrările au fost aplicate.");
-} catch (error) {
-  console.error("Migrarea a eșuat:", error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-} finally {
-  await pool.end();
-}
+main().then(
+  () => console.log("Migrările au fost aplicate."),
+  (error: unknown) => {
+    console.error("Migrarea a eșuat:", error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  },
+);
