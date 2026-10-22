@@ -1,9 +1,10 @@
 import "server-only";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { MINUTE_MS, type EpochMs } from "@/domain/time";
 import { auditLog, bookingItems, bookings, customers } from "@/server/db/schema";
 import { loadBookingSettings, loadTenantInfo, type PublicTenantInfo } from "@/server/repos/booking-data";
 import { resolveBookingToken, withTenant, type BookingTokenTarget } from "@/server/tenant";
+import { lockTenantBookings } from "./persist";
 import { hashBookingToken, TOKEN_PATTERN } from "./token";
 
 // Pagina din linkul „vezi / anulează programarea”: rezumatul programării și anularea de către client.
@@ -114,7 +115,7 @@ export async function cancelBookingByToken(token: string, now: EpochMs): Promise
 
   return withTenant(target.tenantId, async (t) => {
     // Aceeași blocare ca la rezervare: anularea și o rezervare nouă nu se încurcă.
-    await t.tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`booking:${t.tenantId}`}, 0))`);
+    await lockTenantBookings(t);
 
     const [booking] = await t.tx
       .select()

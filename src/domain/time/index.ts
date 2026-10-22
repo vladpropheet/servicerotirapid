@@ -70,4 +70,23 @@ export function ceilToLocalGrid(epochMs: EpochMs, timeZone: string, stepMin: num
   return rounded.epochMilliseconds;
 }
 
+/** Ziua locală de azi într-un fus orar. */
+export function todayIn(timeZone: string, now: EpochMs = Date.now()): Temporal.PlainDate {
+  return localDateOf(now, timeZone);
+}
+
+/** O zi locală ca interval exact [00:00, 00:00 a doua zi). La schimbarea orei, ziua are 23 sau 25 de ore. */
+export function localDayRange(date: Temporal.PlainDate, timeZone: string): { from: Date; to: Date } {
+  const midnight = Temporal.PlainTime.from("00:00");
+  return {
+    from: new Date(localTimeToEpochMs(date, midnight, timeZone)),
+    to: new Date(localTimeToEpochMs(date.add({ days: 1 }), midnight, timeZone)),
+  };
+}
+
+/** „2026-10-23” + „14:30” (ora locală) → moment exact. */
+export function localDateTimeToEpochMs(date: string, time: string, timeZone: string): EpochMs {
+  return localTimeToEpochMs(Temporal.PlainDate.from(date), Temporal.PlainTime.from(time), timeZone);
+}
+
 export { roundUpToStep } from "./duration";

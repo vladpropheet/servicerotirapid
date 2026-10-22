@@ -51,6 +51,31 @@ export const customerSchema = z.object({
     }),
 });
 
+/** Clientul unei programări adăugate de patron: acceptă și numere fixe (clientul a sunat). */
+export const adminCustomerSchema = customerSchema.extend({
+  phone: z
+    .string()
+    .trim()
+    .transform((value, ctx) => {
+      const normalized = normalizeRoPhone(value);
+      if (!normalized) {
+        ctx.addIssue({ code: "custom", message: "Număr de telefon invalid, de exemplu 0722 123 456." });
+        return z.NEVER;
+      }
+      return normalized;
+    }),
+});
+
+export const manualBookingSchema = z.object({
+  selection: selectionSchema,
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Alege data."),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Alege ora."),
+  durationMin: z.number().int().min(5).max(720).nullable(),
+  customer: adminCustomerSchema,
+  note: z.string().trim().max(500).nullable(),
+  force: z.boolean(),
+});
+
 export const bookingRequestSchema = z.object({
   selection: selectionSchema,
   /** Începutul intervalului ales, în milisecunde UTC. */
