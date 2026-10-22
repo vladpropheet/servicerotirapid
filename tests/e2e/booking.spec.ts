@@ -92,6 +92,11 @@ test("politica de confidențialitate e generată din datele firmei", async ({ pa
   await expect(page.getByText("SC DANI ROCA SRL").first()).toBeVisible();
   await expect(page.getByText("persoană împuternicită", { exact: false })).toBeVisible();
   await expect(page.getByText("Nu folosim datele pentru reclame", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Protecția împotriva abuzurilor" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Cookie-uri" })).toBeVisible();
+  await expect(page.getByText("cel mult 24 de luni de la data programării", { exact: false })).toBeVisible();
+  // În teste Turnstile e oprit, deci politica nu pomenește Cloudflare.
+  await expect(page.getByText("Cloudflare", { exact: false })).toHaveCount(0);
   await expect(page.getByText("marketing", { exact: false })).toHaveCount(0);
 });
 

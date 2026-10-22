@@ -114,7 +114,18 @@ function createAuth() {
     advanced: {
       cookiePrefix: "pa",
       useSecureCookies: process.env.NODE_ENV === "production",
+      // IP-ul real, pus de proxy-ul din fața aplicației (Traefik în Coolify). Ca în src/server/security/rate-limit.ts:
+      // X-Forwarded-For poate fi completat de oricine, deci nu-l folosim.
+      ipAddress: { ipAddressHeaders: ["x-real-ip"] },
     },
+    // Logurile nu conțin date personale: doar erorile, fără detaliile atașate, cu numerele lungi mascate.
+    logger: {
+      level: "error",
+      log: (level, message) => {
+        console.error(`Autentificare [${level}]: ${String(message).replace(/\d{6,}/g, "***")}`);
+      },
+    },
+    telemetry: { enabled: false },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
         if (ctx.path !== SIGN_IN_PATH) return;

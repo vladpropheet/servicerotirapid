@@ -6,12 +6,13 @@ import { SiteFooter } from "@/components/site-footer";
 import { FEATURES } from "@/lib/features";
 import { formatRoPhone } from "@/lib/format";
 import { loadTenantInfo } from "@/server/repos/booking-data";
+import { turnstileMode } from "@/server/security/turnstile";
 import { resolvePublicTenant, withTenant } from "@/server/tenant";
 
 export const metadata: Metadata = { title: "Politica de confidențialitate" };
 
-// ATENȚIE: text provizoriu, generat din datele firmei. Trebuie verificat de un jurist înainte de lansare.
-// Varianta completă vine în Faza 6 (GDPR).
+// ATENȚIE: text generat din datele firmei, NEVERIFICAT JURIDIC. Trebuie verificat de un jurist înainte de lansare
+// (temeiurile, transferul către Cloudflare, lista persoanelor împuternicite). Vezi docs/securitate.md.
 export default function PrivacyPage(props: PageProps<"/[slug]/confidentialitate">) {
   return (
     <Suspense fallback={<p className="p-4 text-lg">Se încarcă…</p>}>
@@ -25,6 +26,7 @@ async function PrivacyContent({ params }: { params: PageProps<"/[slug]/confident
   const tenant = await resolvePublicTenant(slug);
   if (!tenant) notFound();
   const info = await withTenant(tenant.id, (t) => loadTenantInfo(t));
+  const usesTurnstile = turnstileMode() === "enabled";
 
   return (
     <>
@@ -59,19 +61,53 @@ async function PrivacyContent({ params }: { params: PageProps<"/[slug]/confident
             : " Nu folosim datele pentru reclame și nu le dăm altor firme."}
         </p>
 
+        <h2 className="mt-6 text-xl font-bold">Cine are acces la date</h2>
+        <p>
+          Doar personalul service-ului. Propheet AIgency le poate vedea numai când service-ul cere ajutor tehnic,
+          iar fiecare astfel de acces se înregistrează. Serverul aplicației este închiriat de la un furnizor de
+          găzduire din Uniunea Europeană. Nu vindem și nu dăm datele altor firme.
+        </p>
+
+        <h2 className="mt-6 text-xl font-bold">Protecția împotriva abuzurilor</h2>
+        <p>
+          Ca să oprim programările false trimise în masă, numărăm câte cereri vin de la aceeași adresă IP și pentru
+          același telefon. Pentru asta păstrăm cel mult 2 zile doar un cod obținut din adresa IP și din telefon,
+          din care acestea nu pot fi citite înapoi. Temeiul este interesul nostru legitim de a proteja programările.
+        </p>
+        {usesTurnstile && (
+          <p className="mt-2">
+            Formularul de programare folosește și Cloudflare Turnstile, un serviciu al Cloudflare, Inc., care verifică
+            dacă formularul e completat de un om. Pentru această verificare, Cloudflare primește date tehnice despre
+            browser și adresa IP și le poate prelucra și în afara Uniunii Europene, în condițiile din{" "}
+            <a href="https://www.cloudflare.com/privacypolicy/" className="font-semibold text-accent underline" rel="noopener noreferrer">
+              politica de confidențialitate Cloudflare
+            </a>
+            .
+          </p>
+        )}
+
+        <h2 className="mt-6 text-xl font-bold">Cookie-uri</h2>
+        <p>
+          Pagina de programare nu folosește cookie-uri de reclamă sau de statistică. Panoul de administrare al
+          service-ului folosește doar un cookie strict necesar pentru logare.
+        </p>
+
         <h2 className="mt-6 text-xl font-bold">Cât timp păstrăm datele</h2>
-        <p>Programările se păstrează cel mult {info.retentionMonths} de luni, apoi se șterg automat.</p>
+        <p>
+          Programările se păstrează cel mult {info.retentionMonths} de luni de la data programării, apoi se șterg
+          automat. Numele și telefonul se șterg odată cu ultima programare.
+        </p>
 
         <h2 className="mt-6 text-xl font-bold">Drepturile tale</h2>
         <p>
           Poți cere oricând acces la datele tale, corectarea sau ștergerea lor, restricționarea prelucrării,
           portabilitatea datelor{FEATURES.marketingSms ? ", te poți opune prelucrării și îți poți retrage acordul pentru marketing" : " și te poți opune prelucrării"}. Pentru
-          orice cerere, sună la {formatRoPhone(info.publicPhone)}. Ai dreptul să depui o plângere la Autoritatea
+          orice cerere, sună la {formatRoPhone(info.publicPhone)}. Îți răspundem în cel mult o lună. Ai dreptul să depui o plângere la Autoritatea
           Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP).
         </p>
 
         <h2 className="mt-6 text-xl font-bold">Unde stau datele</h2>
-        <p>Datele sunt stocate pe servere din Uniunea Europeană.</p>
+        <p>Datele programărilor sunt stocate pe servere din Uniunea Europeană.</p>
 
         <p className="mt-8">
           <Link href={`/${info.slug}`} className="font-semibold text-accent underline">
