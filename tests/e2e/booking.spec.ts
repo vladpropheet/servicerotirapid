@@ -6,6 +6,12 @@ async function shot(page: Page, name: string) {
 }
 
 test("clientul face o programare în 3 pași și o anulează din link", async ({ page }) => {
+  // Regulile CSP nu trebuie să blocheze nimic din aplicație.
+  const cspViolations: string[] = [];
+  page.on("console", (message) => {
+    if (/Content Security Policy/i.test(message.text())) cspViolations.push(message.text());
+  });
+
   await page.goto("/roti-rapid");
   await expect(page.getByRole("heading", { name: "Alege serviciul" })).toBeVisible();
   await expect(page.getByText("Service Roți Rapid", { exact: true })).toBeVisible();
@@ -70,6 +76,7 @@ test("clientul face o programare în 3 pași și o anulează din link", async ({
   await page.getByRole("button", { name: "Da, anulează" }).click();
   await expect(page.getByRole("heading", { name: "Programarea a fost anulată" })).toBeVisible();
   await shot(page, "5-anulata");
+  expect(cspViolations).toEqual([]);
 });
 
 test("serviciile care nu se programează online au „Sună acum”", async ({ page }) => {
