@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuth } from "@/server/auth/auth";
 import { phoneToUsername } from "@/server/auth/users";
+import { clientIp, hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
 
 export type FormState = { error: string | null };
 
@@ -19,6 +20,9 @@ export async function loginAction(previous: LoginState, formData: FormData): Pro
   const password = String(formData.get("parola") ?? "");
   if (!username || password === "") {
     return failed("Scrie numărul de telefon și parola.");
+  }
+  if (!(await hitRateLimit("login-ip", await clientIp(), RATE_RULES.loginsPerIp)).allowed) {
+    return failed("Prea multe încercări de pe această conexiune. Încearcă din nou peste 15 minute.");
   }
 
   let needsCode = false;
@@ -47,6 +51,9 @@ export async function verifyCodeAction(_previous: FormState, formData: FormData)
   const isBackup = formData.get("tip") === "rezerva";
   if (!isBackup && !/^\d{6}$/.test(code)) return { error: "Codul are 6 cifre." };
   if (isBackup && code.length < 6) return { error: "Scrie codul de rezervă." };
+  if (!(await hitRateLimit("login-ip", await clientIp(), RATE_RULES.loginsPerIp)).allowed) {
+    return { error: "Prea multe încercări de pe această conexiune. Încearcă din nou peste 15 minute." };
+  }
 
   try {
     const requestHeaders = await headers();

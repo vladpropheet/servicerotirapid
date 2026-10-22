@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cancelBookingByToken } from "@/server/booking/manage";
+import { clientIp, hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
 
 export type CancelActionState = { error: string | null };
 
@@ -17,6 +18,9 @@ export async function cancelFromLinkAction(
   formData: FormData,
 ): Promise<CancelActionState> {
   const token = String(formData.get("token") ?? "");
+  if (!(await hitRateLimit("cancel-ip", await clientIp(), RATE_RULES.cancelsPerIp)).allowed) {
+    return { error: "Prea multe încercări. Încearcă din nou mai târziu sau sună la service." };
+  }
   let result;
   try {
     result = await cancelBookingByToken(token, Date.now());

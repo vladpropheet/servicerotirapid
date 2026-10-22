@@ -23,6 +23,9 @@ const eslintConfig = defineConfig([
       "src/server/auth/**",
       // Funcțiile panoului de administrare primesc mereu un TenantTx (verificat de testele de izolare).
       "src/server/admin/**",
+      // Limitele de cereri și jobul de păstrare a datelor: tabele globale sau buclă explicită pe tenanți.
+      "src/server/security/**",
+      "src/server/gdpr/**",
     ],
     rules: {
       "no-restricted-imports": [
