@@ -40,6 +40,7 @@ export type AdminContext = {
   tenantId: TenantId;
   tenantSlug: string;
   tenantName: string;
+  timeZone: string;
   tenantStatus: "active" | "suspended";
   /** `support` = super-adminul, intrat cu o sesiune de suport. */
   role: "owner" | "staff" | "support";
@@ -61,6 +62,7 @@ export async function requireAdmin(): Promise<AdminContext> {
       tenantId: support.id,
       tenantSlug: support.slug,
       tenantName: support.displayName,
+      timeZone: support.timezone,
       tenantStatus: support.status,
       role: "support",
       supportSessionId: support.supportSessionId,
@@ -74,6 +76,7 @@ export async function requireAdmin(): Promise<AdminContext> {
     tenantId: tenant.id,
     tenantSlug: tenant.slug,
     tenantName: tenant.displayName,
+    timeZone: tenant.timezone,
     tenantStatus: tenant.status,
     role: tenant.role,
     supportSessionId: null,

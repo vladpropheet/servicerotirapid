@@ -82,6 +82,7 @@ export type AdminTenant = {
   id: TenantId;
   slug: string;
   displayName: string;
+  timezone: string;
   status: "active" | "suspended";
   role: "owner" | "staff";
 };
@@ -96,6 +97,7 @@ export async function resolveAdminTenant(userId: string): Promise<AdminTenant | 
       id: tenants.id,
       slug: tenants.slug,
       displayName: tenants.displayName,
+      timezone: tenants.timezone,
       status: tenants.status,
       role: tenantMemberships.role,
     })
@@ -111,6 +113,7 @@ export type SupportTenant = {
   id: TenantId;
   slug: string;
   displayName: string;
+  timezone: string;
   status: "active" | "suspended";
   supportSessionId: string;
   expiresAt: Date;
@@ -123,6 +126,7 @@ export async function resolveSupportTenant(superadminUserId: string, now: Date =
       id: tenants.id,
       slug: tenants.slug,
       displayName: tenants.displayName,
+      timezone: tenants.timezone,
       status: tenants.status,
       supportSessionId: supportSessions.id,
       expiresAt: supportSessions.expiresAt,
