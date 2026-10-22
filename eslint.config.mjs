@@ -12,7 +12,12 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/server/db/**", "src/server/repos/**", "src/server/tenant/**"],
+    ignores: [
+      "src/server/db/**",
+      "src/server/repos/**",
+      "src/server/tenant/**",
+      "src/server/seed/**",
+    ],
     rules: {
       "no-restricted-imports": [
         "error",
