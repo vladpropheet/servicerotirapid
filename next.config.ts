@@ -41,6 +41,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Imaginea Docker de producție conține doar serverul și fișierele de care are nevoie (fără node_modules complet).
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   // Nu anunțăm în header-e ce tehnologie folosim.
