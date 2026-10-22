@@ -8,7 +8,7 @@ import { newPasswordProblem } from "@/server/auth/password";
 import { getSessionUser } from "@/server/auth/session";
 import { markPasswordChanged } from "@/server/auth/users";
 
-export type PasswordState = { error: string | null; done?: boolean };
+export type PasswordState = { error: string | null; done?: boolean; next?: string };
 
 /** Schimbarea parolei (obligatorie după o parolă temporară). Închide sesiunile de pe celelalte dispozitive. */
 export async function changePasswordAction(_previous: PasswordState, formData: FormData): Promise<PasswordState> {
@@ -34,7 +34,9 @@ export async function changePasswordAction(_previous: PasswordState, formData: F
     return { error: "A apărut o problemă. Încearcă din nou." };
   }
   await markPasswordChanged(user.id);
-  redirect(user.platformRole === "superadmin" ? "/superadmin" : "/admin");
+  // Navigarea o face browserul, într-o cerere nouă: în cererea de acum, sesiunea veche
+  // (schimbată de Better Auth odată cu parola) ar fi încă cea văzută de server.
+  return { error: null, done: true, next: user.platformRole === "superadmin" ? "/superadmin" : "/admin" };
 }
 
 export async function logoutAction(): Promise<void> {

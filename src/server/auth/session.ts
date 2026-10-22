@@ -1,5 +1,5 @@
 import "server-only";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { resolveAdminTenant, resolveSupportTenant, type TenantId } from "@/server/tenant";
 import { getAuth } from "./auth";
@@ -16,8 +16,20 @@ export type SessionUser = {
   twoFactorEnabled: boolean;
 };
 
+/**
+ * Antetele cererii, cu cookie-urile așa cum sunt ACUM. Dacă o acțiune tocmai a schimbat sesiunea
+ * (logare, schimbarea parolei), pagina redesenată în aceeași cerere vede deja sesiunea nouă.
+ */
+async function currentRequestHeaders(): Promise<Headers> {
+  const requestHeaders = new Headers(await headers());
+  const jar = (await cookies()).toString();
+  if (jar) requestHeaders.set("cookie", jar);
+  else requestHeaders.delete("cookie");
+  return requestHeaders;
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await getAuth().api.getSession({ headers: await headers() });
+  const session = await getAuth().api.getSession({ headers: await currentRequestHeaders() });
   if (!session) return null;
   const user = session.user as typeof session.user & {
     username?: string | null;

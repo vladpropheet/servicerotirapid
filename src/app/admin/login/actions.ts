@@ -8,12 +8,17 @@ import { phoneToUsername } from "@/server/auth/users";
 
 export type FormState = { error: string | null };
 
+/** Starea formularului de logare: telefonul rămâne completat după o încercare greșită. */
+export type LoginState = { error: string | null; phone: string; attempt: number };
+
 /** Pasul 1: telefon + parolă. Cookie-ul de sesiune îl setează Better Auth (plugin nextCookies). */
-export async function loginAction(_previous: FormState, formData: FormData): Promise<FormState> {
-  const username = phoneToUsername(String(formData.get("telefon") ?? ""));
+export async function loginAction(previous: LoginState, formData: FormData): Promise<LoginState> {
+  const phone = String(formData.get("telefon") ?? "").slice(0, 30);
+  const failed = (error: string): LoginState => ({ error, phone, attempt: previous.attempt + 1 });
+  const username = phoneToUsername(phone);
   const password = String(formData.get("parola") ?? "");
   if (!username || password === "") {
-    return { error: "Scrie numărul de telefon și parola." };
+    return failed("Scrie numărul de telefon și parola.");
   }
 
   let needsCode = false;
@@ -26,12 +31,12 @@ export async function loginAction(_previous: FormState, formData: FormData): Pro
   } catch (error) {
     if (isAPIError(error)) {
       if (error.statusCode === 429) {
-        return { error: "Prea multe încercări greșite. Contul e blocat 15 minute. Dacă ai uitat parola, sună la Propheet AIgency." };
+        return failed("Prea multe încercări greșite. Contul e blocat 15 minute. Dacă ai uitat parola, sună la Propheet AIgency.");
       }
-      return { error: "Telefonul sau parola nu sunt corecte." };
+      return failed("Telefonul sau parola nu sunt corecte.");
     }
     console.error("Logarea a eșuat:", error instanceof Error ? error.name : "unknown");
-    return { error: "A apărut o problemă. Încearcă din nou." };
+    return failed("A apărut o problemă. Încearcă din nou.");
   }
   redirect(needsCode ? "/admin/login/cod" : "/admin");
 }

@@ -1,12 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Field, Notice } from "@/components/admin/ui";
 import { changePasswordAction, type PasswordState } from "../account-actions";
 
 export function PasswordForm() {
   const [state, action] = useActionState<PasswordState, FormData>(changePasswordAction, { error: null });
+
+  useEffect(() => {
+    // Încărcare completă a paginii, cu noua sesiune.
+    if (state.done && state.next) window.location.assign(state.next);
+  }, [state]);
+
   return (
     <form action={action} className="flex flex-col gap-4">
       <Field label="Parola actuală (sau cea temporară)" name="parola_actuala" type="password" autoComplete="current-password" required />
@@ -20,6 +26,7 @@ export function PasswordForm() {
       />
       <Field label="Scrie din nou parola nouă" name="parola_confirmare" type="password" autoComplete="new-password" required />
       {state.error && <Notice kind="error">{state.error}</Notice>}
+      {state.done && <Notice kind="success">Parola a fost schimbată.</Notice>}
       <SubmitButton>Salvează parola</SubmitButton>
     </form>
   );
