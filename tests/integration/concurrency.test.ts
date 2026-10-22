@@ -2,7 +2,7 @@
 // Trimitem 20 de cereri în același timp, pe conexiuni separate, pentru același interval.
 import { and, count, eq, ne } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
-import { closeDb, getDb } from "@/server/db/client";
+import { closeDb } from "@/server/db/client";
 import { closeOwnerDb, ownerDb } from "./owner-db";
 import { bookingSettings, bookings } from "@/server/db/schema";
 import { reserveOnlineBooking } from "@/server/booking/reserve";

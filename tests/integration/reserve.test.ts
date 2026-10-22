@@ -1,7 +1,7 @@
 import { and, count, eq } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { closeDb, getDb } from "@/server/db/client";
+import { closeDb } from "@/server/db/client";
 import { closeOwnerDb, ownerDb } from "./owner-db";
 import {
   auditLog,
