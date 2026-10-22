@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Nu anunțăm în header-e ce tehnologie folosim.
   poweredByHeader: false,
+  experimental: {
+    // Poza fațadei se încarcă printr-o acțiune de server: maxim 5 MB (+ restul formularului).
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

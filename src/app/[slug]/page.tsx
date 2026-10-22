@@ -36,9 +36,17 @@ async function TenantContent({ params }: { params: PageProps<"/[slug]">["params"
 
   return (
     <>
+      {info.facadeMediaId && (
+        // eslint-disable-next-line @next/next/no-img-element -- poza încărcată de patron, servită de aplicație
+        <img
+          src={`/${info.slug}/fatada?v=${info.facadeMediaId}`}
+          alt={`Fațada ${info.displayName}`}
+          className="h-44 w-full object-cover sm:h-64"
+        />
+      )}
       <header className="bg-zinc-900 px-4 pb-6 pt-8 text-white">
         <div className="mx-auto max-w-2xl">
-          {/* Logo text: service-ul nu are logo (CLAUDE.md §5). Poza fațadei vine din admin, în Faza 4. */}
+          {/* Logo text: service-ul nu are logo (CLAUDE.md §5). Poza fațadei o încarcă patronul din admin. */}
           <p className="font-display text-4xl font-bold uppercase leading-none tracking-tight">{info.displayName}</p>
           <p className="mt-2 text-zinc-300">{info.workAddress}</p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
