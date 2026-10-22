@@ -84,6 +84,8 @@ export const bookingRequestSchema = z.object({
   privacyAccepted: z.literal(true, { error: "Bifează acordul pentru prelucrarea datelor, ca să putem face programarea." }),
   marketingOptIn: z.boolean(),
   idempotencyKey: z.uuid(),
+  /** Tokenul Cloudflare Turnstile (lipsește dacă protecția e oprită, în dezvoltare). */
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 export type BookingRequestInput = z.input<typeof bookingRequestSchema>;

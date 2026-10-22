@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { formatRoPhone, telHref } from "@/lib/format";
 import { loadBookingSettings, loadCatalog, loadTenantInfo } from "@/server/repos/booking-data";
+import { turnstileSiteKey } from "@/server/security/turnstile";
 import { resolvePublicTenant, withTenant } from "@/server/tenant";
 import { BookingWizard } from "./booking-wizard";
 
@@ -80,6 +81,7 @@ async function TenantContent({ params }: { params: PageProps<"/[slug]">["params"
             slotStepMin={settings.slotStepMin}
             pricing={catalog.pricing}
             display={catalog.display}
+            turnstileSiteKey={turnstileSiteKey()}
           />
         )}
       </main>

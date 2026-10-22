@@ -14,6 +14,8 @@ import {
   loadScheduleContext,
   loadTenantInfo,
 } from "@/server/repos/booking-data";
+import { clientIp, hitRateLimit, RATE_RULES } from "@/server/security/rate-limit";
+import { verifyTurnstile } from "@/server/security/turnstile";
 import { resolvePublicTenant, withTenant } from "@/server/tenant";
 
 const DAY_MS = 24 * 60 * MINUTE_MS;
@@ -23,7 +25,7 @@ export type SlotDay = { localDate: string; slots: SlotOption[] };
 
 export type SlotsResult =
   | { ok: true; durationMin: number; days: SlotDay[] }
-  | { ok: false; error: "not_found" | "invalid" | "server" }
+  | { ok: false; error: "not_found" | "invalid" | "server" | "rate_limited" }
   | { ok: false; error: "invalid_selection"; code: EstimateErrorCode | null };
 
 /** Pasul 2: intervalele libere pentru serviciile alese. */
@@ -32,6 +34,9 @@ export async function getSlotsAction(slug: string, input: unknown): Promise<Slot
   if (!parsed.success) return { ok: false, error: "invalid" };
 
   try {
+    if (!(await hitRateLimit("slots", await clientIp(), RATE_RULES.slotsPerIp)).allowed) {
+      return { ok: false, error: "rate_limited" };
+    }
     const tenant = await resolvePublicTenant(slug);
     if (!tenant) return { ok: false, error: "not_found" };
 
@@ -75,7 +80,7 @@ export type CreateBookingResult =
   | { ok: true; token: string }
   | { ok: false; error: "validation"; fieldErrors: Record<string, string> }
   | { ok: false; error: "slot_taken"; alternatives: SlotOption[] }
-  | { ok: false; error: "invalid_selection" | "too_many_bookings" | "not_found" | "server" };
+  | { ok: false; error: "invalid_selection" | "too_many_bookings" | "not_found" | "server" | "rate_limited" | "captcha" };
 
 /** Pasul 3: confirmarea programării. Totul se reverifică pe server. */
 export async function createBookingAction(slug: string, input: unknown): Promise<CreateBookingResult> {
@@ -90,6 +95,16 @@ export async function createBookingAction(slug: string, input: unknown): Promise
   }
 
   try {
+    // Anti-spam (CLAUDE.md §8): limite pe IP și pe telefon, apoi Cloudflare Turnstile.
+    const ip = await clientIp();
+    if (
+      !(await hitRateLimit("booking-ip", ip, RATE_RULES.bookingsPerIp)).allowed ||
+      !(await hitRateLimit("booking-phone", parsed.data.customer.phone, RATE_RULES.bookingsPerPhone)).allowed
+    ) {
+      return { ok: false, error: "rate_limited" };
+    }
+    if (!(await verifyTurnstile(parsed.data.turnstileToken))) return { ok: false, error: "captcha" };
+
     const tenant = await resolvePublicTenant(slug);
     if (!tenant) return { ok: false, error: "not_found" };
 

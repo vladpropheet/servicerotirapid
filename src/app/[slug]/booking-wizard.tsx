@@ -14,6 +14,7 @@ import {
   type PricingSelection,
 } from "@/domain/pricing";
 import { MARKETING_CONSENT_TEXT, PRIVACY_CONSENT_TEXT } from "@/lib/consent-texts";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { FEATURES } from "@/lib/features";
 import { formatDayChip, formatDuration, formatLongDate, formatRoPhone, telHref } from "@/lib/format";
 import type { PublicCatalog, PublicService } from "@/lib/public-catalog";
@@ -24,6 +25,8 @@ type Props = {
   slug: string;
   timeZone: string;
   publicPhone: string;
+  /** Cheia publică Cloudflare Turnstile; null = protecția e oprită (dezvoltare). */
+  turnstileSiteKey: string | null;
   slotStepMin: number;
   pricing: PricingCatalog;
   display: PublicCatalog;
@@ -37,7 +40,7 @@ const ESTIMATE_ERRORS: Partial<Record<EstimateErrorCode, string>> = {
   invalid_quantity: "Cantitatea aleasă nu e permisă.",
 };
 
-export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricing, display }: Props) {
+export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricing, display, turnstileSiteKey }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
 
@@ -65,6 +68,8 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const idempotencyKey = useRef<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   const [pending, startTransition] = useTransition();
 
@@ -128,7 +133,9 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
         setSlotsMessage(
           result.error === "invalid_selection"
             ? (ESTIMATE_ERRORS[result.code ?? "not_offered"] ?? "Serviciile alese nu se pot programa online.")
-            : "Nu am putut încărca orele libere. Încearcă din nou.",
+            : result.error === "rate_limited"
+              ? `Prea multe căutări într-un timp scurt. Încearcă din nou peste câteva minute sau sună-ne la ${formatRoPhone(publicPhone)}.`
+              : "Nu am putut încărca orele libere. Încearcă din nou.",
         );
         return;
       }
@@ -153,6 +160,10 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
     if (!privacyAccepted) errors.privacyAccepted = "Bifează acordul pentru prelucrarea datelor, ca să putem face programarea.";
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0 || !slot) return;
+    if (turnstileSiteKey && !turnstileToken) {
+      setFormMessage("Așteaptă o clipă: verificăm că nu ești robot.");
+      return;
+    }
 
     idempotencyKey.current ??= crypto.randomUUID();
     startTransition(async () => {
@@ -163,12 +174,21 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
         privacyAccepted: true,
         marketingOptIn: FEATURES.marketingSms && marketingOptIn,
         idempotencyKey: idempotencyKey.current,
+        turnstileToken: turnstileToken ?? undefined,
       });
       if (result.ok) {
         router.push(`/p/${result.token}?nou=1`);
         return;
       }
+      // Tokenul anti-robot merge o singură dată: pentru o nouă încercare trebuie altul.
+      setTurnstileReset((count) => count + 1);
       switch (result.error) {
+        case "rate_limited":
+          setFormMessage(`Prea multe programări trimise într-un timp scurt. Încearcă mai târziu sau sună-ne la ${formatRoPhone(publicPhone)}.`);
+          break;
+        case "captcha":
+          setFormMessage("Nu am putut verifica că nu ești robot. Așteaptă o clipă și apasă din nou „Confirmă programarea”.");
+          break;
         case "validation":
           setFieldErrors(result.fieldErrors);
           break;
@@ -578,6 +598,10 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
                   {MARKETING_CONSENT_TEXT} <span className="text-zinc-600">(opțional)</span>
                 </span>
               </label>
+            )}
+
+            {turnstileSiteKey && (
+              <TurnstileWidget siteKey={turnstileSiteKey} onToken={setTurnstileToken} resetCount={turnstileReset} />
             )}
 
             {formMessage && (

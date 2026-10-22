@@ -32,6 +32,8 @@ export default defineConfig({
       AUTH_SECRET: process.env.AUTH_SECRET ?? "cheie-de-sesiune-doar-pentru-teste-0123456789",
       BOOKING_LINK_SECRET: process.env.BOOKING_LINK_SECRET ?? "cheie-doar-pentru-teste-0123456789abcdef",
       NEXT_TELEMETRY_DISABLED: "1",
+      // Testele nu depind de serverele Cloudflare: verificarea anti-robot e oprită conștient.
+      TURNSTILE_DISABLED: "1",
     },
   },
 });
