@@ -144,3 +144,14 @@ export async function resolveSupportTenant(superadminUserId: string, now: Date =
     .limit(1);
   return row ? { ...row, id: toTenantId(row.id) } : null;
 }
+
+export type MaintenanceTenant = { id: TenantId; slug: string; retentionMonths: number };
+
+/** Jobul zilnic de păstrare a datelor: toți tenanții (și cei suspendați), apoi `withTenant` pe rând. */
+export async function listTenantsForMaintenance(): Promise<MaintenanceTenant[]> {
+  const rows = await getDb()
+    .select({ id: tenants.id, slug: tenants.slug, retentionMonths: tenants.retentionMonths })
+    .from(tenants)
+    .orderBy(asc(tenants.slug));
+  return rows.map((row) => ({ ...row, id: toTenantId(row.id) }));
+}

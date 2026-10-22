@@ -59,40 +59,55 @@ export type AdminContext = {
   supportSessionId: string | null;
 };
 
-/** Panoul unui service: patronul lui sau super-adminul în sesiune de suport. */
-export async function requireAdmin(): Promise<AdminContext> {
+export type AdminAccess = { ok: true; ctx: AdminContext } | { ok: false; redirectTo: string };
+
+/** Ca requireAdmin(), dar întoarce unde trebuie trimis utilizatorul în loc să redirecționeze (pentru rute API). */
+export async function checkAdmin(): Promise<AdminAccess> {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
-  if (user.mustChangePassword) redirect("/admin/schimba-parola");
+  if (!user) return { ok: false, redirectTo: "/admin/login" };
+  if (user.mustChangePassword) return { ok: false, redirectTo: "/admin/schimba-parola" };
 
   if (user.platformRole === "superadmin") {
-    if (!user.twoFactorEnabled) redirect("/superadmin/2fa");
+    if (!user.twoFactorEnabled) return { ok: false, redirectTo: "/superadmin/2fa" };
     const support = await resolveSupportTenant(user.id);
-    if (!support) redirect("/superadmin");
+    if (!support) return { ok: false, redirectTo: "/superadmin" };
     return {
-      user,
-      tenantId: support.id,
-      tenantSlug: support.slug,
-      tenantName: support.displayName,
-      timeZone: support.timezone,
-      tenantStatus: support.status,
-      role: "support",
-      supportSessionId: support.supportSessionId,
+      ok: true,
+      ctx: {
+        user,
+        tenantId: support.id,
+        tenantSlug: support.slug,
+        tenantName: support.displayName,
+        timeZone: support.timezone,
+        tenantStatus: support.status,
+        role: "support",
+        supportSessionId: support.supportSessionId,
+      },
     };
   }
 
   const tenant = await resolveAdminTenant(user.id);
-  if (!tenant) redirect("/admin/login?eroare=fara-acces");
+  if (!tenant) return { ok: false, redirectTo: "/admin/login?eroare=fara-acces" };
   return {
-    user,
-    tenantId: tenant.id,
-    tenantSlug: tenant.slug,
-    tenantName: tenant.displayName,
-    timeZone: tenant.timezone,
-    tenantStatus: tenant.status,
-    role: tenant.role,
-    supportSessionId: null,
+    ok: true,
+    ctx: {
+      user,
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+      tenantName: tenant.displayName,
+      timeZone: tenant.timezone,
+      tenantStatus: tenant.status,
+      role: tenant.role,
+      supportSessionId: null,
+    },
   };
+}
+
+/** Panoul unui service: patronul lui sau super-adminul în sesiune de suport. */
+export async function requireAdmin(): Promise<AdminContext> {
+  const access = await checkAdmin();
+  if (!access.ok) redirect(access.redirectTo);
+  return access.ctx;
 }
 
 /** Zona Propheet AIgency: doar super-admin, cu autentificare în doi pași activă. */

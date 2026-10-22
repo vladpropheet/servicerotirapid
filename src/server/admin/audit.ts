@@ -8,6 +8,9 @@ import type { TenantTx } from "@/server/tenant";
 
 export type Actor = { actorUserId: string; actorKind: "owner" | "staff" | "superadmin" };
 
+/** Jobul automat (de ex. ștergerea datelor vechi): fără utilizator. */
+export const SYSTEM_ACTOR = { actorUserId: null, actorKind: "system" } as const;
+
 export type AuditEntry = {
   action: string;
   entityType: string;
@@ -16,7 +19,7 @@ export type AuditEntry = {
   after?: unknown;
 };
 
-export async function writeAudit(t: TenantTx, actor: Actor, entry: AuditEntry): Promise<void> {
+export async function writeAudit(t: TenantTx, actor: Actor | typeof SYSTEM_ACTOR, entry: AuditEntry): Promise<void> {
   await t.tx.insert(auditLog).values({
     tenantId: t.tenantId,
     actorUserId: actor.actorUserId,

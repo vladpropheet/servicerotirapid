@@ -31,6 +31,9 @@ const ACTION_LABEL: Record<string, string> = {
   "tenant.update": "Datele firmei",
   "facade.update": "Poza fațadei",
   "review.confirm": "Valoare confirmată („E corect”)",
+  "gdpr.export": "Date descărcate (CSV)",
+  "customer.erase": "Datele unui client șterse (la cererea lui)",
+  "retention.purge": "Ștergere automată a datelor vechi",
 };
 
 const ACTOR_LABEL: Record<string, string> = {
