@@ -3,6 +3,7 @@ import { and, asc, eq, gt, gte, inArray, isNotNull, isNull, lt, ne, or } from "d
 import type { AvailabilityInput, Closure } from "@/domain/availability";
 import type { PricingCatalog } from "@/domain/pricing";
 import type { EpochMs } from "@/domain/time";
+import type { PublicCatalog } from "@/lib/public-catalog";
 import {
   bookingSettings,
   bookings,
@@ -59,27 +60,6 @@ export async function loadTenantInfo(t: TenantTx): Promise<PublicTenantInfo> {
   if (!row) throw new Error("Tenantul nu există.");
   return row;
 }
-
-/** Ce vede clientul pe pagina publică (fără nimic intern: fără note „de verificat”). */
-export type PublicCatalog = {
-  vehicleTypes: { id: string; label: string }[];
-  rimSizes: { id: string; label: string }[];
-  rimTypes: { id: string; label: string }[];
-  categories: {
-    id: string;
-    name: string;
-    services: {
-      id: string;
-      name: string;
-      description: string | null;
-      includes: string | null;
-      customerExplainer: string | null;
-      unit: "wheel" | "piece" | "service";
-      bookableOnline: boolean;
-    }[];
-  }[];
-  surcharges: { id: string; name: string; description: string | null }[];
-};
 
 export type CatalogBundle = { pricing: PricingCatalog; display: PublicCatalog };
 

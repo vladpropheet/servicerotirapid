@@ -41,7 +41,10 @@ async function targetFor(token: string, now: EpochMs): Promise<BookingTokenTarge
   return resolveBookingToken(hashBookingToken(token), new Date(now));
 }
 
-export async function loadBookingSummary(token: string, now: EpochMs): Promise<BookingSummary | null> {
+export async function loadBookingSummary(
+  token: string,
+  now: EpochMs = Date.now(),
+): Promise<BookingSummary | null> {
   const target = await targetFor(token, now);
   if (!target) return null;
 

@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async headers() {
+    return [
+      {
+        // Linkurile „vezi / anulează programarea” sunt personale: nu se indexează,
+        // nu se păstrează în cache și nu se trimit altor site-uri ca „Referer”.
+        source: "/p/:token*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
