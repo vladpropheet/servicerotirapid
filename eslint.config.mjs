@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
       "src/server/repos/**",
       "src/server/tenant/**",
       "src/server/seed/**",
+      // Rezervarea și anularea lucrează doar prin withTenant() (verificat de testele de izolare).
+      "src/server/booking/**",
     ],
     rules: {
       "no-restricted-imports": [

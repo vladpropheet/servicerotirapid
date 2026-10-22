@@ -1,6 +1,6 @@
 // Calculul prețului estimativ și al duratei unei programări. Funcție pură.
 // Regulile sunt descrise în planul Fazei 0, secțiunea „Algoritmul de preț”.
-import { roundUpToStep } from "@/domain/time";
+import { roundUpToStep } from "@/domain/time/duration";
 import type {
   Estimate,
   EstimateError,

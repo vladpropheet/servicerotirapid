@@ -70,8 +70,4 @@ export function ceilToLocalGrid(epochMs: EpochMs, timeZone: string, stepMin: num
   return rounded.epochMilliseconds;
 }
 
-/** Rotunjește o durată în sus la pas: 58 min cu pas de 15 → 60 min. */
-export function roundUpToStep(minutes: number, stepMin: number): number {
-  if (minutes <= 0) return 0;
-  return Math.ceil(minutes / stepMin) * stepMin;
-}
+export { roundUpToStep } from "./duration";

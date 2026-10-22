@@ -25,7 +25,7 @@ export function getDb(): Database {
   if (!db) {
     pool = new Pool({
       connectionString: databaseUrl(),
-      max: 10,
+      max: Number(process.env.DATABASE_POOL_MAX ?? 10),
       // Toate orele se lucrează în UTC; conversia în ora României se face în aplicație.
       options: "-c TimeZone=UTC",
     });
