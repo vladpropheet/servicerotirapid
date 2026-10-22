@@ -1,0 +1,17 @@
+# Ce NU intră în imaginea Docker: secrete, date locale, rezultate de build și teste.
+.env
+.env.*
+!.env.example
+.git
+.claude
+node_modules
+.next
+dist
+storage
+coverage
+playwright-report
+test-results
+blob-report
+*.log
+.DS_Store
+Thumbs.db
