@@ -1,7 +1,7 @@
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/server/db/client";
-import { bookingAccessTokens, tenants } from "@/server/db/schema";
+import { bookingAccessTokens, supportSessions, tenantMemberships, tenants } from "@/server/db/schema";
 import { toTenantId, type TenantId } from "./with-tenant";
 
 /** Adrese folosite de aplicație, care nu pot fi slug-ul unui service. */
@@ -76,4 +76,67 @@ export async function resolvePublicTenant(slug: string): Promise<PublicTenant | 
     return null;
   }
   return { id: toTenantId(row.id), slug: row.slug, displayName: row.displayName };
+}
+
+export type AdminTenant = {
+  id: TenantId;
+  slug: string;
+  displayName: string;
+  status: "active" | "suspended";
+  role: "owner" | "staff";
+};
+
+/**
+ * Service-ul administrat de un utilizator (din tabelul de membership).
+ * Un service suspendat rămâne accesibil patronului (poate vedea datele), dar pagina publică e oprită.
+ */
+export async function resolveAdminTenant(userId: string): Promise<AdminTenant | null> {
+  const [row] = await getDb()
+    .select({
+      id: tenants.id,
+      slug: tenants.slug,
+      displayName: tenants.displayName,
+      status: tenants.status,
+      role: tenantMemberships.role,
+    })
+    .from(tenantMemberships)
+    .innerJoin(tenants, eq(tenants.id, tenantMemberships.tenantId))
+    .where(eq(tenantMemberships.userId, userId))
+    .orderBy(asc(tenantMemberships.createdAt))
+    .limit(1);
+  return row ? { ...row, id: toTenantId(row.id) } : null;
+}
+
+export type SupportTenant = {
+  id: TenantId;
+  slug: string;
+  displayName: string;
+  status: "active" | "suspended";
+  supportSessionId: string;
+  expiresAt: Date;
+};
+
+/** Service-ul în care super-adminul are o sesiune de suport activă (cu motiv și termen). */
+export async function resolveSupportTenant(superadminUserId: string, now: Date = new Date()): Promise<SupportTenant | null> {
+  const [row] = await getDb()
+    .select({
+      id: tenants.id,
+      slug: tenants.slug,
+      displayName: tenants.displayName,
+      status: tenants.status,
+      supportSessionId: supportSessions.id,
+      expiresAt: supportSessions.expiresAt,
+    })
+    .from(supportSessions)
+    .innerJoin(tenants, eq(tenants.id, supportSessions.tenantId))
+    .where(
+      and(
+        eq(supportSessions.superadminUserId, superadminUserId),
+        isNull(supportSessions.endedAt),
+        gt(supportSessions.expiresAt, now),
+      ),
+    )
+    .orderBy(desc(supportSessions.startedAt))
+    .limit(1);
+  return row ? { ...row, id: toTenantId(row.id) } : null;
 }

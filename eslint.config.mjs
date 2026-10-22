@@ -19,6 +19,10 @@ const eslintConfig = defineConfig([
       "src/server/seed/**",
       // Rezervarea și anularea lucrează doar prin withTenant() (verificat de testele de izolare).
       "src/server/booking/**",
+      // Conturile și sesiunile: tabele globale (fără tenant), vezi src/server/db/schema/auth.ts.
+      "src/server/auth/**",
+      // Funcțiile panoului de administrare primesc mereu un TenantTx (verificat de testele de izolare).
+      "src/server/admin/**",
     ],
     rules: {
       "no-restricted-imports": [
