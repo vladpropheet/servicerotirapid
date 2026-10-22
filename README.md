@@ -15,7 +15,7 @@ Aplicație multi-tenant de programări online (Propheet AIgency). Primul service
 
 Toate comenzile se rulează în PowerShell, în folderul proiectului.
 
-1. Copiază `.env.example` în `.env` și pune o parolă lungă în locul valorilor false (aceeași parolă în toate cele trei locuri).
+1. Copiază `.env.example` în `.env`. Pune o parolă lungă în locul valorilor false (aceeași parolă în toate cele trei locuri) și o cheie lungă, aleatorie, la `BOOKING_LINK_SECRET`.
 2. Instalează dependențele:
    ```
    npm install
@@ -37,13 +37,15 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
    npm run dev
    ```
    Apoi deschide http://localhost:3000/api/health în browser. Trebuie să vezi `{"status":"ok"}`.
+   Pagina de programare a service-ului: http://localhost:3000/roti-rapid
 
 ## Comenzi utile
 
 | Comandă | Ce face |
 |---|---|
 | `npm run dev` | Pornește aplicația pentru dezvoltare (http://localhost:3000). |
-| `npm test` | Rulează toate testele (baza de date trebuie să fie pornită). |
+| `npm test` | Rulează testele unitare și de integrare (baza de date trebuie să fie pornită). |
+| `npm run test:e2e` | Rulează testele cap-coadă în browser (Playwright). Prima dată: `npx playwright install chromium`. |
 | `npm run db:studio` | Deschide în browser un vizualizator al bazei de date. |
 | `npm run db:generate` | Generează o migrare nouă după o modificare în `src/server/db/schema`. |
 | `npm run db:migrate` | Aplică migrările care nu au rulat încă. Nu șterge date. |
