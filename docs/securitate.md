@@ -1,12 +1,12 @@
 # Lista de verificare a securității și GDPR
 
-Stare la finalul Fazei 6 (22.10.2026). `[x]` = făcut și verificat prin teste; `[ ]` = rămâne de făcut (cu faza sau persoana responsabilă).
+Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` = făcut și verificat prin teste; `[ ]` = rămâne de făcut (cu faza sau persoana responsabilă).
 
 ## 1. Secrete
 
 - [x] Niciun secret în cod sau în Git. `.env` e exclus din Git (`.gitignore`), iar `.env.example` conține doar valori false. Verificat: valorile din `.env` nu apar în istoricul Git.
 - [x] Cheile secrete (`AUTH_SECRET`, `BOOKING_LINK_SECRET`) sunt verificate la pornire: în producție serverul nu pornește dacă lipsesc sau au sub 32 de caractere (`src/instrumentation.ts`).
-- [ ] **Faza 7:** cheile de producție se generează nou (nu cele din dezvoltare) și se pun doar în Coolify.
+- [x] În producție, parolele bazei de date și cheile secrete le generează Coolify (64 de caractere aleatorii, `SERVICE_...` în `docker-compose.prod.yml`) și stau doar în Coolify.
 
 ## 2. Baza de date
 
@@ -15,7 +15,8 @@ Stare la finalul Fazei 6 (22.10.2026). `[x]` = făcut și verificat prin teste; 
 - [x] Aplicația folosește contul `app_user`, fără drept de ocolire a RLS. În producție serverul refuză să pornească cu un cont de administrator.
 - [x] Istoricul modificărilor (`audit_log`) nu poate fi modificat sau șters de aplicație.
 - [x] Local, portul 5432 e legat doar de `127.0.0.1`.
-- [ ] **Faza 7:** fără port 5432 public pe VPS (baza de date doar în rețeaua internă Docker din Coolify).
+- [x] În producție baza de date nu are niciun port publicat (`docker-compose.prod.yml` fără `ports:`), verificat local pe varianta de producție. Pe server: verificarea din `docs/productie.md`, pasul B8.
+- [x] Separarea conturilor în producție: doar containerul `ops` are parola proprietarului bazei de date (migrări, backup); aplicația are doar `app_user`.
 
 ## 3. Autentificare (panoul patronului și super-admin)
 
@@ -33,7 +34,8 @@ Stare la finalul Fazei 6 (22.10.2026). `[x]` = făcut și verificat prin teste; 
 - [x] IP-ul se citește doar din `X-Real-Ip` (pus de proxy). `X-Forwarded-For` poate fi falsificat, deci nu se folosește.
 - [x] Cloudflare Turnstile (gratuit): verificat pe server; testat cu cheile de test oficiale Cloudflare (programare reușită, fără blocări CSP). Oprit în dezvoltare fără chei; în producție serverul nu pornește fără chei, decât cu `TURNSTILE_DISABLED=1`.
 - [ ] **Vlad, înainte de lansare:** cont Cloudflare gratuit → Turnstile → widget pentru subdomeniul aplicației → cheile în Coolify.
-- [ ] **Faza 7:** de verificat pe server că Traefik (proxy-ul din Coolify) suprascrie `X-Real-Ip` cu IP-ul real al vizitatorului.
+- [x] Verificat local cu Traefik 3.7 (proxy-ul folosit de Coolify), configurație implicită: un `X-Real-Ip` / `X-Forwarded-For` falsificat de vizitator e înlocuit cu IP-ul real.
+- [ ] **Pe server:** configurația proxy-ului Coolify nu are `forwardedHeaders.insecure` (`docs/productie.md`, B8).
 
 ## 5. Header-e de securitate (verificate cu `curl` și în testele Playwright)
 
@@ -65,7 +67,7 @@ Stare la finalul Fazei 6 (22.10.2026). `[x]` = făcut și verificat prin teste; 
 - [x] Export CSV al programărilor și clienților (panou → Meniu → Datele clienților). Fiecare export se notează în istoric.
 - [x] Ștergerea datelor unui client la cerere: nume, telefon, nr. de înmatriculare și observații șterse definitiv; programările viitoare anulate; linkurile personale oprite; programările rămân anonime în statistici.
 - [x] Ștergere automată: programările mai vechi decât perioada setată (implicit 24 de luni, editabilă în „Datele firmei”) + clienții rămași fără programări + sesiuni și linkuri expirate (`npm run gdpr:retention`, se poate rula de mai multe ori).
-- [ ] **Faza 7:** programarea zilnică a ștergerii automate (task programat în Coolify). Până atunci, pagina din panou promite o ștergere care nu rulează încă singură.
+- [ ] **Pe server:** task-ul programat zilnic `retention.sh` în Coolify (`docs/productie.md`, B7). Până atunci, pagina din panou promite o ștergere care nu rulează încă singură.
 - [ ] **Vlad / patron:** confirmarea perioadei de păstrare (24 de luni).
 - [x] Fără marketing și fără SMS (decizia din 22.10.2026): nu se colectează acord de marketing.
 
@@ -75,13 +77,18 @@ Stare la finalul Fazei 6 (22.10.2026). `[x]` = făcut și verificat prin teste; 
 - Rămase, fără impact în producție:
   - `esbuild` ≤ 0.24.2 (moderat), prin `drizzle-kit`: afectează doar serverul de dezvoltare al esbuild, pe care nu-l folosim. `drizzle-kit` e unealta de migrări; nu rulează în aplicație.
   - `braces` (ridicat), prin `eslint-config-next`: doar în verificarea codului (lint), pe tiparele noastre de fișiere. Nu există încă o versiune reparată.
-- [ ] **Faza 7:** imaginea Docker de producție nu include uneltele de dezvoltare; `npm audit --omit=dev` din nou înainte de lansare.
+- [x] Imaginile Docker de producție nu includ uneltele de dezvoltare: `app` conține doar serverul Next.js și dependențele lui (ieșire „standalone”), `ops` doar scripturile împachetate + modulul argon2. `drizzle-kit` și `eslint` nu ajung pe server.
+- [x] Containerele rulează cu utilizatorul `node` (fără drepturi de administrator); codul aplicației aparține lui root și nu poate fi modificat de aplicație.
 
 ## 10. Producție și backup (Faza 7)
 
-- [ ] VPS securizat: actualizări, utilizator non-root, SSH doar cu cheie, firewall doar 22/80/443, fail2ban, actualizări automate de securitate.
-- [ ] HTTPS prin Let's Encrypt (Coolify). HSTS e deja activ în producție.
-- [ ] Datele doar pe serverul din UE (VPS OVH).
-- [ ] Backup zilnic criptat al bazei de date în afara serverului, păstrat 30 de zile, cu test de restaurare documentat. Backup și pentru folderul `storage/` (poza fațadei).
-- [ ] Migrările rulează controlat la deploy.
-- [ ] Monitorizare: `/api/health` (nu dezvăluie informații sensibile).
+Codul și ghidul sunt gata; pașii de pe server îi faci tu după [productie.md](productie.md).
+
+- [x] `Dockerfile` multi-stage, utilizator non-root, healthcheck; `docker-compose.prod.yml` pentru Coolify. Testat local cap-coadă: build, migrări, seed, cont patron, programare cu Turnstile (chei de test), logare, încărcarea pozei, header-e.
+- [x] Migrările rulează controlat la fiecare deploy, în containerul `ops`, înainte de pornirea aplicației; doar adaugă, fiecare în tranzacție.
+- [x] Backup criptat (pg_dump + age; pe server doar cheia publică, cheia privată doar la tine) pentru baza de date și pozele încărcate; 7 zile local, 30 de zile în afara serverului (orice stocare S3). Testat local: backup, test de restaurare, restaurare reală, copie S3 (server S3 de test), refuzul backup-ului fără cheie și al cheii greșite.
+- [ ] **Pe server (Vlad):** securizarea VPS-ului (B2), instalarea Coolify (B4), deploy (B5), task-urile programate și primul test de restaurare pe server (B7).
+- [ ] **Vlad:** decizia pentru n8n (B1) și alegerea stocării externe pentru backup (B7). Până atunci, backup-ul există doar pe același server.
+- [ ] HTTPS prin Let's Encrypt: automat în Coolify după setarea domeniului (B5). HSTS e deja activ în producție.
+- [ ] Datele doar în UE: VPS-ul și stocarea externă într-o regiune din UE (B0, B7).
+- [x] Monitorizare: `/api/health` (fără informații sensibile) + healthcheck-urile containerelor, folosite de Coolify.

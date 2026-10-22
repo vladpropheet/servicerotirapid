@@ -71,6 +71,13 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 - Formularul de programare: limite de cereri pe IP și pe telefon + Cloudflare Turnstile (gratuit; oprit în dezvoltare dacă lipsesc cheile).
 - Lista completă, cu ce e făcut și ce rămâne: [docs/securitate.md](docs/securitate.md).
 
+## Producție
+
+- Ghidul pas cu pas (VPS OVH, Coolify, backup, restaurare): [docs/productie.md](docs/productie.md).
+- `docker-compose.prod.yml` (folosit de Coolify): `db` (PostgreSQL, fără port public), `ops` (migrări la fiecare deploy, backup criptat, ștergere automată) și `app` (aplicația).
+- `Dockerfile`: imaginile `app` și `ops`, cu utilizator fără drepturi de administrator.
+- `npm run build:scripts` împachetează scripturile din `scripts/` pentru containerul `ops` (`dist/scripts/`).
+
 ## Structura
 
 - `src/domain/` — logică pură (prețuri, intervale libere, bani), fără bază de date.
@@ -84,4 +91,5 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 - `src/app/[slug]/` — pagina publică de programare; `src/app/admin/` — panoul patronului; `src/app/superadmin/` — Propheet AIgency.
 - `drizzle/` — migrările SQL (versionate în Git).
 - `storage/` — pozele încărcate (nu intră în Git; în producție: volum inclus în backup).
+- `docker/ops/` — comenzile containerului `ops` (backup, restaurare, migrări, conturi).
 - `tests/` — teste unitare, de integrare (pe baza separată `servicerotirapid_test`) și cap-coadă (Playwright).
