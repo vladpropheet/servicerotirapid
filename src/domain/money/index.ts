@@ -25,7 +25,12 @@ const leiFormatter = new Intl.NumberFormat("ro-RO", {
   maximumFractionDigits: 2,
 });
 
+/** 25000 → „250”, 250 → „2,5” (fără „lei”). */
+export function formatLeiAmount(bani: Bani): string {
+  return leiFormatter.format(bani / 100);
+}
+
 /** 25000 → „250 lei”, 250 → „2,5 lei”. */
 export function formatBani(bani: Bani): string {
-  return `${leiFormatter.format(bani / 100)} lei`;
+  return `${formatLeiAmount(bani)} lei`;
 }
