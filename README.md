@@ -73,9 +73,10 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 
 ## Producție
 
-- Ghidul pas cu pas (VPS OVH, Coolify, backup, restaurare): [docs/productie.md](docs/productie.md).
-- `docker-compose.prod.yml` (folosit de Coolify): `db` (PostgreSQL, fără port public), `ops` (migrări la fiecare deploy, backup criptat, ștergere automată) și `app` (aplicația).
+- Ghidul pas cu pas (VPS OVH lângă n8n, Caddy, backup, restaurare): [docs/productie.md](docs/productie.md).
+- `docker-compose.prod.yml` (pe VPS, în spatele Caddy-ului existent): `db` (PostgreSQL, fără port public), `ops` (migrări la fiecare deploy, backup criptat, ștergere automată) și `app` (aplicația).
 - `Dockerfile`: imaginile `app` și `ops`, cu utilizator fără drepturi de administrator.
+- `docker/server/`: generarea `.env` de producție, deploy, cron, blocul pentru Caddy.
 - `npm run build:scripts` împachetează scripturile din `scripts/` pentru containerul `ops` (`dist/scripts/`).
 
 ## Structura

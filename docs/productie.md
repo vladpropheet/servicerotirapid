@@ -1,301 +1,264 @@
-# Ghid de producție: VPS OVH + Coolify + backup
+# Ghid de producție: VPS OVH (lângă n8n) + Caddy + backup
 
 Ghid pas cu pas pentru punerea aplicației pe internet. Fiecare pas spune **unde** rulezi comanda, **ce face** și **cum arată un rezultat corect**. Dacă ceva arată altfel, oprește-te și trimite-mi exact ce vezi.
 
 > **Reguli de siguranță pe tot parcursul**
 > - Nu închide sesiunea SSH deschisă până nu ai verificat că o sesiune **nouă** merge. Așa nu rămâi blocat pe dinafară.
 > - Dacă totuși rămâi blocat: panoul OVH → VPS-ul tău → **KVM** (consola din browser) te lasă să intri oricum.
-> - Parolele, cheile și fișierele cu secrete merg doar în managerul tău de parole (Bitwarden, 1Password etc.), niciodată în chat, email sau Git.
+> - Parolele, cheile și fișierul `.env` de pe server nu ajung niciodată în chat, email sau Git. Le ții în managerul de parole (Bitwarden, 1Password etc.).
+> - n8n nu se atinge, cu o excepție: adăugăm un bloc la configurația Caddy (cu copie de siguranță înainte).
 
-## Cum arată totul pe server
+## Cum arată totul pe server (decizia din 23.10.2026: fără Coolify)
 
 ```
-Internet ──HTTPS──> Traefik (proxy-ul Coolify, porturile 80/443)
-                        │
-                        ▼
-              app  (aplicația, contul app_user, supus Row-Level Security)
-                        │  rețea internă Docker, fără porturi publice
-              db   (PostgreSQL 16)
-                        ▲
-              ops  (migrări la fiecare deploy, backup criptat, ștergere automată)
-                        │
-                        └──> backup criptat: local (7 zile) + în afara serverului (30 de zile)
+Internet ──HTTPS──> Caddy (din /opt/n8n-docker, porturile 80/443, certificate Let's Encrypt automate)
+                     ├──> n8n, cal-webhook-gateway          (neschimbate)
+                     └──> app  (aplicația de programări, contul app_user, supus Row-Level Security)
+                            │  rețea internă proprie, invizibilă pentru restul serverului
+                          db   (PostgreSQL 16, fără port public)
+                            ▲
+                          ops  (migrări la fiecare pornire, backup criptat, ștergere automată)
+                            └──> backup criptat: local (7 zile) + în afara serverului (30 de zile)
 ```
 
-Totul e descris în [docker-compose.prod.yml](../docker-compose.prod.yml) și [Dockerfile](../Dockerfile). Coolify construiește imaginile din GitHub și le pornește.
+Totul e descris în [docker-compose.prod.yml](../docker-compose.prod.yml), [Dockerfile](../Dockerfile) și [docker/server/](../docker/server/). Aplicația stă în `/opt/servicerotirapid`, lângă `/opt/n8n-docker`.
 
 **Termeni noi:**
 - **SSH**: conexiunea securizată prin care dai comenzi serverului din PowerShell.
 - **Cheie SSH**: o pereche de fișiere. Cea **privată** rămâne pe PC-ul tău, cea **publică** se pune pe server. Înlocuiește parola la logare.
 - **Container**: un program izolat, cu tot ce-i trebuie, pornit de Docker.
-- **Variabilă de mediu**: o setare (ex. o parolă) dată aplicației la pornire, din afara codului. În producție le pui doar în Coolify.
-- **Deploy**: Coolify ia codul din GitHub, construiește aplicația și o pornește.
+- **Variabilă de mediu**: o setare (ex. o parolă) dată aplicației la pornire, din afara codului. Pe server stau în `/opt/servicerotirapid/.env`.
+- **Deploy**: serverul ia codul din GitHub, construiește aplicația și o (re)pornește.
+- **Cron**: programul care rulează comenzi singur, la ore fixe (backup, ștergere automată).
+
+## Ce știm deja despre server (verificat pe 23.10.2026)
+
+| | |
+|---|---|
+| Locație | Varșovia (UE) |
+| Sistem | Ubuntu 24.04.5 LTS |
+| Memorie / disc | 3,7 GB RAM + 2 GB swap / 22 GB liberi |
+| Rulează | n8n (+ task runners, Postgres, cal-webhook-gateway), Caddy pe 80/443, Evolution API pe 8080 |
+| Firewall (ufw) | activ: 22, 80, 443, 8080 |
+| SSH | `passwordauthentication yes` (de închis), `permitrootlogin no` (bine) |
 
 ---
 
 ## Partea A — pe PC-ul tău
 
-### A1. Cheia SSH
+### A1. O cheie SSH nouă (cea veche cere o parolă pe care nu o mai știi)
 
 1. **Unde:** PowerShell pe Windows.
    ```
-   ssh-keygen -t ed25519 -C "vlad-pc"
+   ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\id_ed25519_vps -C "vlad-pc"
    ```
-   **Ce face:** creează cheia SSH. Apasă Enter la locul fișierului (implicit `C:\Users\VLAD\.ssh\id_ed25519`), apoi alege o **parolă pentru cheie** (o tastezi de două ori, nu apare pe ecran).
-   **Rezultat corect:** `Your identification has been saved in C:\Users\VLAD/.ssh/id_ed25519` și o „imagine” din caractere.
-2. Fișierul `id_ed25519` (fără `.pub`) **nu se trimite nimănui**. Fișierul `id_ed25519.pub` e cel public.
+   **Ce face:** creează o cheie SSH nouă. Îți cere o **parolă pentru cheie** de două ori (nu apare pe ecran). Salveaz-o **întâi** în managerul de parole, apoi tasteaz-o.
+   **Rezultat corect:** `Your identification has been saved in C:\Users\VLAD\.ssh\id_ed25519_vps`.
+2. **Unde:** PowerShell.
+   ```
+   type $env:USERPROFILE\.ssh\id_ed25519_vps.pub | ssh ubuntu@51.83.185.231 "cat >> ~/.ssh/authorized_keys"
+   ```
+   **Ce face:** pune cheia publică pe server. Îți cere parola serverului (ultima dată).
+   **Rezultat corect:** nicio eroare.
+3. **Verificare (unde:** PowerShell, fereastră nouă**):**
+   ```
+   ssh -i $env:USERPROFILE\.ssh\id_ed25519_vps ubuntu@51.83.185.231
+   ```
+   **Rezultat corect:** îți cere **parola cheii** (`Enter passphrase for key`), nu parola serverului, și intri.
 
 ### A2. Repo GitHub privat
 
-1. **Unde:** github.com, logat în contul tău → **New repository**.
-   Nume: `servicerotirapid`, vizibilitate **Private**, fără README / .gitignore / licență (le avem deja). → **Create repository**.
+1. **Unde:** github.com → **New repository**. Nume `servicerotirapid`, **Private**, fără README / .gitignore / licență. → **Create repository**.
 2. **Unde:** PowerShell, în folderul proiectului (`C:\Users\VLAD\Documents\ClaudeProjects\servicerotirapid`).
    ```
    git remote add origin https://github.com/NUMELE-TAU/servicerotirapid.git
    ```
-   **Ce face:** spune lui Git unde e repo-ul de pe GitHub („remote” = copia de pe internet). Înlocuiește `NUMELE-TAU`.
-   **Rezultat corect:** nicio ieșire.
-3. Push-ul (trimiterea codului pe GitHub) îl facem **împreună, când îmi spui**, după ce ultima fază e îmbinată în `main`:
+   **Ce face:** spune lui Git unde e copia de pe GitHub („remote”). **Rezultat corect:** nicio ieșire.
+3. Când îmi spui, îmbin Faza 7 în `main`; apoi urci codul:
    ```
    git push -u origin main
    ```
-   **Ce face:** urcă ramura `main` pe GitHub. Prima dată se deschide browserul pentru logarea în GitHub.
-   **Rezultat corect:** `branch 'main' set up to track 'origin/main'`.
-   Repo-ul nu conține secrete: `.env` e exclus, iar istoricul a fost verificat (vezi [securitate.md](securitate.md)).
+   **Rezultat corect:** `branch 'main' set up to track 'origin/main'`. Prima dată se deschide browserul pentru logarea în GitHub. Repo-ul nu conține secrete (verificat, vezi [securitate.md](securitate.md)).
 
 ---
 
 ## Partea B — serverul
 
-### B0. Verificare (doar citire, nu modifică nimic)
+Toate comenzile din partea B le rulezi **pe server**, în sesiunea SSH (`ssh -i $env:USERPROFILE\.ssh\id_ed25519_vps ubuntu@51.83.185.231`).
 
-1. **Unde:** panoul OVH → VPS-ul tău. Notează **IP-ul**, **sistemul de operare** și **locația** (trebuie să fie în UE, ex. Gravelines, Strasbourg, Varșovia, Frankfurt).
-2. **Unde:** PowerShell.
-   ```
-   ssh ubuntu@IP-UL-VPS
-   ```
-   **Ce face:** te conectează la server. Utilizatorul e cel din emailul OVH de livrare (de obicei `ubuntu`).
-   **Rezultat corect:** un prompt de forma `ubuntu@vps-xxxx:~$`.
-3. **Unde:** în aceeași fereastră (acum ești pe server). Rulează pe rând și **trimite-mi tot ce afișează**:
-   ```
-   lsb_release -ds
-   free -h
-   df -h /
-   sudo ss -tlnp
-   sudo docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}"
-   ```
-   **Ce face:** arată versiunea sistemului, memoria, spațiul pe disc, ce programe ascultă pe porturi și ce containere Docker rulează (aici vedem cum e instalat n8n).
-   **Rezultat corect:** text cu informații. Dacă ultima comandă spune `command not found`, Docker nu e instalat (n8n rulează altfel); trimite-mi și asta.
+### B1. Actualizări și securizare
 
-**Aici te oprești.** Pe baza rezultatului decidem pasul B1.
+> **Atenție:** pasul 1 repornește serverul, deci **n8n se oprește cam un minut**. Alege o oră fără automatizări importante.
 
-### B1. Ce facem cu n8n (decidem după B0)
-
-Coolify are nevoie de porturile 80 și 443. Documentația Coolify recomandă un server curat, fără alte aplicații. Variantele:
-
-| Variantă | Pro | Contra |
-|---|---|---|
-| **Mut n8n în Coolify** (Coolify are n8n gata configurat) | Un singur server; HTTPS automat și pentru n8n; totul administrat din același panou. | O mutare de făcut atent: backup n8n înainte, păstrarea cheii de criptare n8n, n8n oprit câteva minute. |
-| **VPS separat pentru aplicație** | Zero risc pentru n8n; server curat, cum recomandă Coolify. | Cost lunar în plus pentru încă un VPS (îl verificăm în panoul OVH înainte să decizi). |
-| **Coolify alături de n8n, fără mutare** | Nimic de mutat. | Merge doar dacă n8n **nu** folosește porturile 80/443. Vedem asta în B0. |
-
-Îți dau pașii exacți pentru varianta aleasă.
-
-### B2. Securizarea serverului
-
-> **Atenție:** pașii 4–6 schimbă modul de logare. Păstrează sesiunea SSH deschisă până la verificarea din pasul 6.
-
-1. **Unde:** server (SSH).
+1. ```
+   sudo apt update && sudo apt full-upgrade -y && sudo reboot
    ```
-   sudo apt update && sudo apt full-upgrade -y
+   **Ce face:** instalează cele 26 de actualizări și repornește serverul. Conexiunea se închide.
+   **Rezultat corect:** după un minut te reconectezi; mesajul de bun venit nu mai spune `System restart required`, iar `docker ps` arată containerele n8n pornite (`Up`).
+2. **Logarea doar cu cheie** (doar după ce A1 merge!):
    ```
-   **Ce face:** instalează actualizările de securitate. **Rezultat corect:** se termină fără `E:` (erori). Dacă scrie că e nevoie de restart: `sudo reboot`, aștepți un minut și te reconectezi.
-2. **Utilizator non-root:** pe OVH lucrezi deja cu `ubuntu` (are `sudo`), iar `root` e dezactivat pentru logarea cu parolă. Nu e nimic de creat.
-3. **Unde:** PowerShell pe PC (o fereastră **nouă**, nu cea cu serverul).
+   echo "PasswordAuthentication no
+   KbdInteractiveAuthentication no" | sudo tee /etc/ssh/sshd_config.d/00-securizare.conf && sudo sshd -t && sudo systemctl restart ssh && sudo sshd -T | grep -E "^(passwordauthentication|permitrootlogin)"
    ```
-   type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh ubuntu@IP-UL-VPS "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
-   ```
-   **Ce face:** copiază cheia publică pe server. Îți cere parola serverului o ultimă dată.
-   **Rezultat corect:** nicio eroare. Apoi `ssh ubuntu@IP-UL-VPS` îți cere **parola cheii** (cea din A1), nu parola serverului.
-4. **Unde:** server.
-   ```
-   sudo nano /etc/ssh/sshd_config.d/00-securizare.conf
-   ```
-   **Ce face:** deschide un fișier nou de setări SSH. Numele începe cu `00-` ca să aibă prioritate față de setările implicite. Scrie în el exact:
-   ```
-   PubkeyAuthentication yes
-   PasswordAuthentication no
-   KbdInteractiveAuthentication no
-   PermitRootLogin prohibit-password
-   ```
-   Salvezi cu `Ctrl+O`, Enter, ieși cu `Ctrl+X`.
-   `PermitRootLogin prohibit-password`: root nu poate intra cu parolă, doar cu cheie. E necesar pentru Coolify, care se conectează la propriul server cu o cheie (documentația Coolify cere exact această setare).
-5. **Unde:** server.
-   ```
-   sudo sshd -t && sudo systemctl restart ssh && sudo sshd -T | grep -E "^(passwordauthentication|permitrootlogin|pubkeyauthentication)"
-   ```
-   **Ce face:** verifică fișierul, repornește SSH și afișează setările active.
-   **Rezultat corect:** `pubkeyauthentication yes`, `passwordauthentication no` și `permitrootlogin without-password` (sau `prohibit-password`; sunt două nume pentru aceeași setare).
-6. **Unde:** PowerShell, fereastră nouă: `ssh ubuntu@IP-UL-VPS`. Dacă intri cu parola cheii, e bine; abia acum poți închide sesiunea veche.
-7. **Firewall (unde:** server**):**
-   ```
-   sudo ufw allow OpenSSH && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw allow 8000/tcp && sudo ufw --force enable && sudo ufw status
-   ```
-   **Ce face:** permite doar SSH (22), web (80, 443) și, temporar, panoul Coolify (8000). Restul e blocat.
-   **Rezultat corect:** `Status: active` și cele patru reguli.
-   **De știut:** porturile publicate de containerele Docker ocolesc `ufw`. De aceea aplicația noastră nu publică niciun port: totul trece prin proxy-ul Coolify, iar baza de date nu are port public. Portul 8000 al Coolify îl închidem în B4.
-8. **Fail2ban (unde:** server**):**
+   **Ce face:** oprește logarea cu parolă. Numele `00-...` face ca setarea să aibă prioritate.
+   **Rezultat corect:** `passwordauthentication no` și `permitrootlogin no`. Apoi, **într-o fereastră nouă**, verifici că intri cu cheia. Abia după asta închizi sesiunea veche.
+3. **Fail2ban:**
    ```
    sudo apt install -y fail2ban && sudo systemctl enable --now fail2ban && sudo fail2ban-client status sshd
    ```
-   **Ce face:** blochează temporar IP-urile care încearcă des parole/chei greșite pe SSH.
-   **Rezultat corect:** `Status for the jail: sshd`.
-9. **Actualizări automate de securitate (unde:** server**):**
+   **Ce face:** blochează temporar IP-urile care încearcă des logări greșite. **Rezultat corect:** `Status for the jail: sshd`.
+4. **Actualizări automate de securitate:**
    ```
    sudo apt install -y unattended-upgrades && sudo dpkg-reconfigure -plow unattended-upgrades
    ```
-   **Ce face:** instalează singur actualizările de securitate. Pe ecranul albastru alegi **Yes**.
-   **Rezultat corect:** `cat /etc/apt/apt.conf.d/20auto-upgrades` arată două linii cu `"1"`.
+   Pe ecranul albastru alegi **Yes**. **Rezultat corect:** `cat /etc/apt/apt.conf.d/20auto-upgrades` arată două linii cu `"1"`.
+5. **Firewall:** e deja activ (22, 80, 443, 8080). Aplicația nu are nevoie de alte porturi. Portul 8080 (Evolution API) îl discutăm separat.
 
-### B3. Domeniul (DNS)
+### B2. Subdomeniul (DNS)
 
-1. Alegem subdomeniile, de exemplu `programari.DOMENIU` (aplicația) și `coolify.DOMENIU` (panoul Coolify).
-2. **Unde:** la firma unde e administrat domeniul Propheet AIgency (secțiunea DNS). Adaugi două înregistrări **A** cu valoarea **IP-ul VPS-ului**: una pentru `programari`, una pentru `coolify`.
-3. **Unde:** PowerShell.
-   ```
-   Resolve-DnsName programari.DOMENIU
-   ```
-   **Rezultat corect:** apare IP-ul VPS-ului (poate dura de la câteva minute la câteva ore).
+1. Alegi subdomeniul aplicației, de exemplu `programari.DOMENIU`.
+2. **Unde:** la firma unde e administrat domeniul (secțiunea DNS). Adaugi:
+   - înregistrare **A**: `programari` → `51.83.185.231`;
+   - înregistrare **AAAA**: `programari` → `2001:41d0:601:1100::6844`.
+3. **Verificare (unde:** PowerShell pe PC**):** `Resolve-DnsName programari.DOMENIU`. **Rezultat corect:** apar cele două adrese (poate dura de la câteva minute la câteva ore).
 
-### B4. Instalarea Coolify (după decizia din B1)
+### B3. Codul pe server (cheie GitHub doar pentru citire)
 
-1. **Unde:** server.
+1. ```
+   ssh-keygen -t ed25519 -f ~/.ssh/github_servicerotirapid -N "" -C "vps-deploy" && cat ~/.ssh/github_servicerotirapid.pub
    ```
-   curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash
+   **Ce face:** creează pe server o cheie cu care serverul poate **doar citi** repo-ul. Afișează partea publică (o linie `ssh-ed25519 ...`).
+2. **Unde:** github.com → repo-ul `servicerotirapid` → **Settings** → **Deploy keys** → **Add deploy key**. Titlu `VPS`, lipești linia, **nu** bifezi „Allow write access”. → **Add key**.
+3. ```
+   printf 'Host github-servicerotirapid\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/github_servicerotirapid\n  IdentitiesOnly yes\n' >> ~/.ssh/config && chmod 600 ~/.ssh/config && sudo mkdir -p /opt/servicerotirapid && sudo chown ubuntu:ubuntu /opt/servicerotirapid && git clone git@github-servicerotirapid:NUMELE-TAU/servicerotirapid.git /opt/servicerotirapid
    ```
-   **Ce face:** scriptul oficial Coolify instalează Docker (dacă lipsește) și Coolify.
-   **Rezultat corect:** la final un mesaj „Congratulations” cu adresa `http://IP-UL-VPS:8000`.
-2. **Imediat**, în browser: `http://IP-UL-VPS:8000` → creezi contul de administrator (email-ul tău, parolă lungă, salvată în managerul de parole). **Primul care ajunge pe pagină devine administrator**, de aceea nu amâni.
-3. **Unde:** server. Salvează secretele instalării:
-   ```
-   sudo cat /data/coolify/source/.env
-   ```
-   Copiezi tot conținutul în managerul de parole (o notă „Coolify .env”). Fără el, Coolify nu poate fi restaurat.
-4. **Unde:** panoul Coolify → **Settings** → domeniul instanței: `https://coolify.DOMENIU`. Salvezi și verifici că `https://coolify.DOMENIU` se deschide cu lacăt (HTTPS).
-5. Abia după ce merge pe domeniu, închidem portul 8000 (unde: server):
-   ```
-   sudo nano /data/coolify/source/docker-compose.custom.yml
-   ```
-   Conținut:
-   ```
-   services:
-     coolify:
-       ports:
-         - "127.0.0.1:8000:8080"
-   ```
-   Apoi:
-   ```
-   cd /data/coolify/source && sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.custom.yml config > /dev/null && curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash && sudo ufw delete allow 8000/tcp
-   ```
-   **Ce face:** verifică fișierul, reaplică instalarea cu panoul legat doar de server (accesibil numai prin domeniu), apoi scoate regula 8000 din firewall. Este metoda din documentația Coolify („Compose overrides”).
-   **Rezultat corect:** `https://coolify.DOMENIU` merge, iar în PowerShell pe PC `Test-NetConnection IP-UL-VPS -Port 8000` arată `TcpTestSucceeded : False`.
-   Porturile 6001 și 6002 (actualizări în timp real și terminalul din panou) rămân deschise, dar cer logarea în Coolify. Le putem închide ulterior din firewall-ul de rețea OVH (Edge Network Firewall), dacă vrei.
+   **Ce face:** spune lui SSH ce cheie să folosească pentru GitHub, creează folderul și descarcă codul.
+   **Rezultat corect:** la prima conexiune scrii `yes`, apoi `Receiving objects: 100%`.
 
-### B5. Aplicația în Coolify
+### B4. Fișierul cu secrete (.env)
 
-1. **GitHub:** în Coolify, **+ New** → resursă din **repository privat (GitHub App)** → urmezi pașii care creează aplicația Coolify în contul tău GitHub și îi dai acces **doar** la repo-ul `servicerotirapid`. Ramura: `main`.
-2. **Build pack:** **Docker Compose**. Docker Compose Location: `/docker-compose.prod.yml`. Salvezi.
-3. **Environment Variables** (Coolify le creează singur din fișier):
-   - `APP_BASE_URL` = `https://programari.DOMENIU` (fără `/` la final). **Obligatoriu.**
-   - `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`: cheile din pasul B9.
-   - `SERVICE_PASSWORD_64_POSTGRES`, `SERVICE_PASSWORD_64_APPUSER`, `SERVICE_BASE64_64_AUTH`, `SERVICE_BASE64_64_BOOKINGLINK`: **le generează Coolify** (parole și chei de 64 de caractere). Nu le schimba după primul deploy: `SERVICE_BASE64_64_BOOKINGLINK` invalidează linkurile clienților, iar parolele bazei de date sunt deja scrise în ea.
-   - `BACKUP_*`: în pasul B7.
-4. **Domains:** la serviciul **app**: `https://programari.DOMENIU:3000` (`:3000` spune proxy-ului pe ce port ascultă aplicația; vizitatorii folosesc adresa normală, fără port).
-5. **Deploy automat la push:** recomand să-l lași **oprit**. Fiecare deploy în producție îl pornești tu, cu butonul **Deploy**.
-6. **Deploy.** Primul durează câteva minute (construiește imaginile).
-   **Rezultat corect:** în jurnalul de deploy apar, în ordine: `db` healthy → `ops` cu „Migrările au fost aplicate” → `app` healthy.
-7. **Verificare (unde:** PowerShell**):**
+1. ```
+   cd /opt/servicerotirapid && sh docker/server/generate-env.sh https://programari.DOMENIU
+   ```
+   **Ce face:** creează `.env` cu parole și chei aleatorii de 64 de caractere. Nu le afișează și nu suprascrie un `.env` existent.
+   **Rezultat corect:** `Am creat .env (doar proprietarul îl poate citi).`
+2. Până ai cheile Cloudflare (B9), oprești conștient verificarea anti-robot:
+   ```
+   sed -i 's/^#TURNSTILE_DISABLED=1/TURNSTILE_DISABLED=1/' .env
+   ```
+   Limitele de cereri pe IP și pe telefon rămân active.
+3. **Copie de siguranță a `.env`:** `cat .env`, copiezi tot în managerul de parole (notă „servicerotirapid .env”). Fără el, backup-urile bazei de date se pot restaura, dar parolele trebuie refăcute.
+
+### B5. Prima pornire
+
+```
+sh docker/server/deploy.sh
+```
+**Ce face:** construiește imaginile (prima dată durează câteva minute; n8n merge mai departe) și pornește `db` → `ops` (aplică migrările) → `app`.
+**Rezultat corect:** la final, un tabel cu `app`, `db`, `ops` toate `Up ... (healthy)`.
+**Dacă `app` nu pornește:** `docker compose -f docker-compose.prod.yml logs app` arată motivul (de exemplu `Pornire oprită: Lipsesc TURNSTILE_SITE_KEY...`).
+
+### B6. Caddy: adresa publică și HTTPS
+
+> **Atenție:** modificăm configurația Caddy, care servește și n8n. Facem întâi o copie, verificăm fișierul înainte de aplicare, iar reîncărcarea nu oprește n8n.
+
+1. ```
+   sudo cp /opt/n8n-docker/caddy_config/Caddyfile /opt/n8n-docker/caddy_config/Caddyfile.inainte-de-programari
+   ```
+   **Ce face:** copie de siguranță a configurației actuale.
+2. ```
+   sudo nano /opt/n8n-docker/caddy_config/Caddyfile
+   ```
+   Mergi la final (după ultima acoladă `}`), lași un rând liber și adaugi blocul din [docker/server/Caddyfile.snippet](../docker/server/Caddyfile.snippet), cu domeniul tău:
+   ```
+   programari.DOMENIU {
+   	reverse_proxy servicerotirapid-app:3000 {
+   		header_up X-Real-IP {remote_host}
+   	}
+   }
+   ```
+   Salvezi cu `Ctrl+O`, Enter, ieși cu `Ctrl+X`.
+3. ```
+   docker exec n8n-docker-caddy-1 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile && docker exec n8n-docker-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+   ```
+   **Ce face:** verifică noua configurație și, doar dacă e corectă, o aplică fără să oprească n8n.
+   **Rezultat corect:** `Valid configuration`, apoi nicio eroare.
+   **Dacă apare o eroare:** nu se aplică nimic. Pui copia înapoi: `sudo cp /opt/n8n-docker/caddy_config/Caddyfile.inainte-de-programari /opt/n8n-docker/caddy_config/Caddyfile` și îmi trimiți mesajul.
+4. **Verificare (unde:** PowerShell pe PC**):**
    ```
    curl.exe -s https://programari.DOMENIU/api/health
    ```
-   **Rezultat corect:** `{"status":"ok"}`. Apoi `https://programari.DOMENIU/roti-rapid` arată „Pagina nu există” (normal: încă nu am creat service-ul, pasul B6).
+   **Rezultat corect:** `{"status":"ok"}` (prima cerere poate dura câteva secunde: Caddy cere certificatul). Verifică și că n8n merge în continuare la adresa lui.
 
-**Dacă aplicația nu pornește:** jurnalul `app` spune exact motivul, de exemplu `Pornire oprită: Lipsesc TURNSTILE_SITE_KEY...` (completezi cheile) sau `Lipsește APP_BASE_URL`.
-
-### B6. Datele de pornire și conturile
-
-**Unde:** Coolify → aplicația → **Terminal** → containerul **ops**.
+### B7. Datele de pornire și conturile
 
 1. ```
-   seed.sh
+   docker exec servicerotirapid-ops-1 seed.sh
    ```
-   **Ce face:** creează service-ul `roti-rapid` din catalog (o singură dată; a doua rulare nu schimbă nimic).
    **Rezultat corect:** `Am creat service-ul „roti-rapid”: 32 servicii...`.
 2. ```
-   create-user.sh --rol patron --service roti-rapid --telefon "0766 777 130" --nume "Patron"
+   docker exec servicerotirapid-ops-1 create-user.sh --rol patron --service roti-rapid --telefon "0766 777 130" --nume "Patron"
    ```
-   **Ce face:** contul patronului, cu o **parolă temporară afișată o singură dată**. I-o dai patronului personal (nu prin SMS sau email); la prima logare e obligat s-o schimbe.
+   **Ce face:** contul patronului, cu o **parolă temporară afișată o singură dată**. I-o dai personal (nu prin SMS sau email); la prima logare trebuie s-o schimbe.
 3. ```
-   create-user.sh --rol superadmin --telefon "07xx xxx xxx" --nume "Vlad"
+   docker exec servicerotirapid-ops-1 create-user.sh --rol superadmin --telefon "07xx xxx xxx" --nume "Vlad"
    ```
-   Contul tău de super-admin. Te loghezi pe `https://programari.DOMENIU/admin/login`, schimbi parola și activezi verificarea în doi pași (cod din aplicația de autentificare de pe telefon).
+   Contul tău. Te loghezi pe `https://programari.DOMENIU/admin/login`, schimbi parola și activezi verificarea în doi pași.
 
-### B7. Backup criptat
+### B8. Backup criptat și task-urile zilnice
 
-**Cheia de criptare (o singură dată).** Unde: terminalul containerului **ops**:
-```
-age-keygen
-```
-**Ce face:** afișează o pereche de chei. **Nu o salvează nicăieri.**
-- Linia `AGE-SECRET-KEY-1...` = cheia **privată**. O copiezi în managerul de parole (notă „Backup servicerotirapid – cheie privată”) și, ideal, o printezi și o păstrezi în siguranță. **Fără ea, backup-urile nu pot fi deschise de nimeni, nici de tine.**
-- Linia `# public key: age1...` = cheia **publică**. O pui în Coolify la `BACKUP_AGE_RECIPIENT` (fără `# public key: `), apoi **Redeploy**.
-
-**Programarea zilnică.** Coolify → aplicația → **Scheduled Tasks** → **+ Add**, de două ori:
-
-| Nume | Comandă | Frecvență | Container |
-|---|---|---|---|
-| Ștergere date vechi (GDPR) | `retention.sh` | `0 2 * * *` | `ops` |
-| Backup criptat | `backup.sh` | `30 2 * * *` | `ops` |
-
-Orele sunt în fusul orar al serverului (de obicei UTC; 02:00 UTC = 04:00 sau 05:00 în România).
-
-**Primul backup + testul de restaurare (obligatoriu).** Unde: terminalul **ops**:
-1. ```
-   backup.sh
+1. **Cheia de criptare (o singură dată):**
+   ```
+   docker exec servicerotirapid-ops-1 age-keygen
+   ```
+   Afișează două linii importante:
+   - `AGE-SECRET-KEY-1...` = cheia **privată**. O copiezi în managerul de parole (notă „Backup servicerotirapid – cheie privată”) și, ideal, o printezi. **Fără ea, backup-urile nu pot fi deschise de nimeni.** Nu o salvezi pe server.
+   - `# public key: age1...` = cheia **publică**. O pui în `.env`:
+     ```
+     nano /opt/servicerotirapid/.env
+     ```
+     la linia `BACKUP_AGE_RECIPIENT=age1...` (fără `# public key: `). Salvezi, apoi:
+     ```
+     cd /opt/servicerotirapid && docker compose -f docker-compose.prod.yml up -d
+     ```
+2. **Primul backup:**
+   ```
+   docker exec servicerotirapid-ops-1 backup.sh
    ```
    **Rezultat corect:** `Backup local: db-....dump.age (... KB), fisiere-....tar.gz.age (... KB).` Până alegi stocarea externă apare și `ATENȚIE: ... doar pe acest server`.
-2. ```
-   restore-test.sh
+3. **Testul de restaurare (obligatoriu):**
    ```
-   **Ce face:** cere cheia privată (lipești linia `AGE-SECRET-KEY-...`; nu apare pe ecran), restaurează cel mai nou backup într-o bază **temporară**, afișează ce conține, apoi o șterge. Baza reală nu e atinsă.
-   **Rezultat corect:** un tabel cu numărul de service-uri, servicii, programări, clienți și `Test de restaurare REUȘIT`.
-3. Notezi rezultatul în tabelul „Jurnalul testelor de restaurare” de la finalul acestui ghid. Repetă testul **o dată pe lună** și după orice schimbare de server.
-
-**Copia în afara serverului (când alegi furnizorul).** În contul furnizorului (OVH Object Storage sau altul compatibil S3, într-o regiune din UE) creezi:
-- un **bucket** privat (ex. `servicerotirapid-backup`),
-- o **cheie de acces** (Access Key + Secret Key) cu drept doar pe acel bucket.
-
-Apoi în Coolify completezi `BACKUP_S3_ENDPOINT` (adresa S3 dată de furnizor, cu `https://`), `BACKUP_S3_REGION`, `BACKUP_S3_BUCKET`, `BACKUP_S3_ACCESS_KEY_ID`, `BACKUP_S3_SECRET_ACCESS_KEY` → **Redeploy** → în terminalul **ops**: `backup.sh`.
-**Rezultat corect:** `Copie în afara serverului: gata (servicerotirapid-backup).` Copiile mai vechi de 30 de zile se șterg singure.
-
-### B8. Verificări finale
-
-| Ce | Cum | Rezultat corect |
-|---|---|---|
-| HTTPS | `https://programari.DOMENIU/roti-rapid` | lacăt în browser, pagina de programare |
-| Header-e de securitate | PowerShell: `curl.exe -sI https://programari.DOMENIU/roti-rapid` | `Strict-Transport-Security`, `Content-Security-Policy`, `X-Frame-Options: DENY` |
-| Baza de date închisă | PowerShell: `Test-NetConnection IP-UL-VPS -Port 5432` | `TcpTestSucceeded : False` |
-| Programare de test | o faci de pe telefon, apoi o anulezi din link | confirmare, apoi „Programarea a fost anulată” |
-| Panou | logare patron, „Azi” / „Mâine” | programarea de test apare |
-| IP-ul real al vizitatorilor | Coolify → Servers → localhost → Proxy → configurația | nu conține `forwardedHeaders.insecure` (altfel limitele anti-spam pot fi ocolite) |
-| Backup | Scheduled Tasks → ultima execuție a `backup.sh` | Success |
+   docker exec -it servicerotirapid-ops-1 restore-test.sh
+   ```
+   Lipești cheia privată (nu apare pe ecran) și Enter. Restaurează cel mai nou backup într-o bază **temporară**, afișează ce conține, apoi o șterge. Baza reală nu e atinsă.
+   **Rezultat corect:** un tabel cu service-uri, servicii, programări, clienți și `Test de restaurare REUȘIT`. Notezi rezultatul în jurnalul de la final.
+4. **Task-urile zilnice (cron):**
+   ```
+   sudo cp /opt/servicerotirapid/docker/server/cron /etc/cron.d/servicerotirapid && sudo chmod 644 /etc/cron.d/servicerotirapid
+   ```
+   **Ce face:** în fiecare noapte rulează ștergerea datelor vechi (02:00 UTC) și backup-ul (02:30 UTC).
+   **Verificare a doua zi:** `sudo tail -n 5 /var/log/servicerotirapid.log` arată `Ștergere automată gata...` și `Backup local: ...`.
+5. **Copia în afara serverului (când alegi furnizorul):** în contul furnizorului (OVH Object Storage sau altul compatibil S3, regiune din UE) creezi un **bucket** privat și o **cheie de acces** doar pentru el. Completezi în `.env` liniile `BACKUP_S3_*`, rulezi din nou comanda `docker compose ... up -d` de la punctul 1 și `docker exec servicerotirapid-ops-1 backup.sh`.
+   **Rezultat corect:** `Copie în afara serverului: gata (...)`. Copiile mai vechi de 30 de zile se șterg singure.
 
 ### B9. Cloudflare Turnstile (anti-spam, gratuit)
 
-1. Cont gratuit pe cloudflare.com → **Turnstile** → **Add widget**.
-2. Hostname: `programari.DOMENIU`. Widget mode: **Managed**.
-3. Copiezi **Site Key** în `TURNSTILE_SITE_KEY` și **Secret Key** în `TURNSTILE_SECRET_KEY` (Coolify) → **Redeploy**.
+1. Cont gratuit pe cloudflare.com → **Turnstile** → **Add widget**. Hostname: `programari.DOMENIU`, mod **Managed**.
+2. În `/opt/servicerotirapid/.env`: completezi `TURNSTILE_SITE_KEY` și `TURNSTILE_SECRET_KEY` și pui `#` în fața liniei `TURNSTILE_DISABLED=1`.
+3. `cd /opt/servicerotirapid && docker compose -f docker-compose.prod.yml up -d`
 4. **Rezultat corect:** o programare de test merge; în politica de confidențialitate apare paragraful despre Cloudflare.
+
+### B10. Verificări finale
+
+| Ce | Cum | Rezultat corect |
+|---|---|---|
+| HTTPS | `https://programari.DOMENIU/roti-rapid` pe telefon | lacăt, pagina de programare |
+| Header-e de securitate | PowerShell: `curl.exe -sI https://programari.DOMENIU/roti-rapid` | `Strict-Transport-Security`, `Content-Security-Policy`, `X-Frame-Options: DENY` |
+| Baza de date închisă | PowerShell: `Test-NetConnection 51.83.185.231 -Port 5432` | `TcpTestSucceeded : False` |
+| Programare de test | o faci de pe telefon, apoi o anulezi din link | confirmare, apoi „Programarea a fost anulată” |
+| Panou | logare patron, „Azi” / „Mâine” | programarea de test apare |
+| n8n | adresa n8n | merge ca înainte |
+| Backup de noapte | `sudo tail /var/log/servicerotirapid.log` | `Backup local: ...` |
 
 ---
 
@@ -303,24 +266,24 @@ Apoi în Coolify completezi `BACKUP_S3_ENDPOINT` (adresa S3 dată de furnizor, c
 
 ### Un deploy nou (o versiune nouă a aplicației)
 1. Codul nou ajunge în `main` pe GitHub (doar cu acordul tău).
-2. Coolify → **Deploy**. Containerul `ops` aplică singur migrările noi **înainte** ca aplicația nouă să pornească. Migrările doar adaugă (nu șterg date) și rulează fiecare într-o tranzacție: dacă una eșuează, nu se aplică nimic, iar deploy-ul se oprește cu eroarea în jurnalul `ops`.
+2. Pe server: `cd /opt/servicerotirapid && sh docker/server/deploy.sh`.
+   Containerul `ops` aplică singur migrările noi **înainte** ca aplicația nouă să pornească. Migrările doar adaugă (nu șterg date) și rulează fiecare într-o tranzacție: dacă una eșuează, nu se aplică nimic, aplicația nouă nu pornește, iar `docker compose -f docker-compose.prod.yml logs ops` arată eroarea.
 3. În timpul deploy-ului aplicația poate fi indisponibilă câteva secunde.
 
 ### Restaurare în caz de dezastru
 
 > **Atenție:** restaurarea **înlocuiește** baza de date. Tot ce s-a salvat după momentul backup-ului se pierde. Se folosește doar dacă datele actuale sunt stricate sau pierdute.
 
-**Unde:** terminalul containerului **ops**.
-1. Alegi backup-ul: `ls -l /backups` (copiile locale) sau, dacă serverul e nou, îl descarci din copia externă:
+1. Alegi backup-ul: `docker exec servicerotirapid-ops-1 ls -l /backups` sau, dacă serverul e nou, îl descarci din copia externă:
    ```
-   s3.sh ls "extern:$BACKUP_S3_BUCKET/servicerotirapid"
-   s3.sh copy "extern:$BACKUP_S3_BUCKET/servicerotirapid/db-DATA.dump.age" /backups
+   docker exec servicerotirapid-ops-1 sh -c 's3.sh ls "extern:$BACKUP_S3_BUCKET/servicerotirapid"'
+   docker exec servicerotirapid-ops-1 sh -c 's3.sh copy "extern:$BACKUP_S3_BUCKET/servicerotirapid/db-DATA.dump.age" /backups'
    ```
 2. ```
-   restore-db.sh /backups/db-DATA.dump.age
+   docker exec -it servicerotirapid-ops-1 restore-db.sh /backups/db-DATA.dump.age
    ```
    Cere confirmarea `DA` și cheia privată. Blochează câteva secunde aplicația, restaurează totul într-o singură tranzacție (dacă eșuează, baza rămâne cum era) și redeschide aplicația.
-3. Pozele (dacă e nevoie): `restore-files.sh /backups/fisiere-DATA.tar.gz.age`.
+3. Pozele, dacă e nevoie: `docker exec -it servicerotirapid-ops-1 restore-files.sh /backups/fisiere-DATA.tar.gz.age`.
 4. Verifici în panou că datele sunt cele așteptate.
 
 Testat pe calculatorul de dezvoltare (22.10.2026): o modificare făcută după backup a dispărut după restaurare, iar aplicația a mers mai departe fără repornire.
@@ -331,3 +294,6 @@ Testat pe calculatorul de dezvoltare (22.10.2026): o modificare făcută după b
 |---|---|---|---|
 | 22.10.2026 | backup de test, pe PC (Docker) | REUȘIT (1 / 1 / 1) | Claude, la construirea Fazei 7 |
 | | | | |
+
+### De discutat separat (nu ține de aplicație)
+- **Evolution API** e publicat direct pe portul 8080 (IPv4 și IPv6), fără HTTPS. Porturile publicate de Docker ocolesc `ufw`, deci regula din firewall nu-l poate închide. Variantă: îl pui în spatele lui Caddy (cu HTTPS) și îl legi doar la `127.0.0.1`.

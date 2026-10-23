@@ -63,6 +63,7 @@ Datele de pornire (servicii, prețuri, suprataxe, program, setări) sunt în **`
 - **Teste:** Vitest (logică) + Playwright (fluxul de programare cap-coadă).
 - **Rulare:** Docker. `docker-compose.yml` pentru dezvoltare locală (app + Postgres). `Dockerfile` de producție (build multi-stage, utilizator non-root).
 - **Producție:** **VPS OVH**, administrat cu **Coolify**. Aplicația și baza de date stau pe același server. **Baza de date nu este expusă în internet** (fără port public 5432). Adresa: un **subdomeniu al domeniului Propheet AIgency** (încă nu știm care e; pune-l în variabila de mediu `APP_BASE_URL`, nu în cod). HTTPS prin Let's Encrypt, din Coolify.
+  - *Decizie 23.10.2026:* **fără Coolify**. Pe VPS rulează deja n8n, cu Caddy pe porturile 80/443. Aplicația stă alături, în Docker Compose (`docker-compose.prod.yml`), iar Caddy-ul existent face HTTPS (Let's Encrypt) și pentru ea. Coolify rămâne o variantă dacă aplicația se mută pe un VPS separat.
 - **Fus orar:** `Europe/Bucharest`, cu trecerea corectă la ora de vară/iarnă. Stochează orele în UTC (`timestamptz`) și afișează-le în ora României.
 - **Limba interfeței:** română cu diacritice corecte (ă, â, î, ș, ț).
 
@@ -179,6 +180,7 @@ Mobile-first, instalabil pe ecranul telefonului (PWA). Totul în română, cu cu
 
 - Ghid pentru securizarea VPS-ului (actualizări, utilizator non-root, SSH doar cu cheie, firewall doar pe 22/80/443, fail2ban, actualizări automate de securitate), apoi instalarea Coolify. **Întreabă-mă întâi ce mai rulează pe VPS**: Coolify ocupă porturile 80/443 și poate opri alte site-uri.
 - Deploy din GitHub prin Coolify. Variabilele de mediu se pun doar în Coolify.
+  - *Decizie 23.10.2026 (fără Coolify):* deploy din GitHub cu `git pull` + `docker compose` (`docker/server/deploy.sh`); variabilele de mediu stau doar în `.env` pe server, citibil doar de proprietar; task-urile programate prin cron (`docker/server/cron`).
 - **Backup automat zilnic** al bazei de date (pg_dump, criptat) **în afara serverului** (de ex. OVH Object Storage), cu păstrare de 30 de zile și **un test de restaurare documentat**.
 - Migrările bazei de date rulează controlat la deploy, nu automat distructiv.
 

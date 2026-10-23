@@ -1,14 +1,18 @@
-# PRODUCȚIE: folosit de Coolify (resursă „Docker Compose” din GitHub). NU pentru dezvoltare.
+# PRODUCȚIE, pe VPS-ul OVH, lângă n8n (decizia din 23.10.2026: fără Coolify). NU pentru dezvoltare.
 #
-# Trei containere, toate în rețeaua internă creată de Coolify:
+#   cd /opt/servicerotirapid && docker compose -f docker-compose.prod.yml up -d --build
+#
+# Trei containere:
 #   db   - PostgreSQL 16. Fără `ports:`: baza de date NU e accesibilă din internet.
-#   ops  - aplică migrările la fiecare deploy; rulează backup-ul și ștergerea automată (task-uri programate).
+#   ops  - aplică migrările la fiecare pornire; backup criptat și ștergere automată (cron pe server).
 #          Singurul cu parola contului proprietar al bazei de date.
-#   app  - aplicația. Se conectează cu `app_user` (supus Row-Level Security). Primește domeniul în Coolify.
+#   app  - aplicația. Se conectează cu `app_user` (supus Row-Level Security). Caddy-ul existent (din n8n-docker)
+#          face HTTPS și trimite cererile la ea prin rețeaua Docker comună (PROXY_NETWORK).
 #
-# Variabilele ${SERVICE_...} sunt generate automat de Coolify la primul deploy (parole și chei lungi, aleatorii)
-# și rămân aceleași la deploy-urile următoare. Celelalte se completează în Coolify → Environment Variables.
+# Secretele stau în fișierul .env de lângă acest fișier (doar pe server, generat de docker/server/generate-env.sh).
 # Ghidul complet: docs/productie.md
+
+name: servicerotirapid
 
 services:
   db:
@@ -16,10 +20,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: app
-      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_64_POSTGRES}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
       POSTGRES_DB: servicerotirapid
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks: [intern]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d servicerotirapid"]
       interval: 5s
@@ -32,10 +37,10 @@ services:
       target: ops
     restart: unless-stopped
     environment:
-      MIGRATION_DATABASE_URL: postgres://app:${SERVICE_PASSWORD_64_POSTGRES}@db:5432/servicerotirapid
-      DATABASE_URL: postgres://app_user:${SERVICE_PASSWORD_64_APPUSER}@db:5432/servicerotirapid
-      APP_DB_PASSWORD: ${SERVICE_PASSWORD_64_APPUSER}
-      # Backup criptat (docs/productie.md, pasul „Backup”). Cheia PUBLICĂ age; cea privată nu stă pe server.
+      MIGRATION_DATABASE_URL: postgres://app:${POSTGRES_PASSWORD:?}@db:5432/servicerotirapid
+      DATABASE_URL: postgres://app_user:${APP_DB_PASSWORD:?}@db:5432/servicerotirapid
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
+      # Backup criptat (docs/productie.md). Cheia PUBLICĂ age; cea privată nu stă pe server.
       BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
       BACKUP_LOCAL_KEEP_DAYS: ${BACKUP_LOCAL_KEEP_DAYS:-7}
       # Copia în afara serverului (orice stocare compatibilă S3). Goale = doar copie locală.
@@ -48,6 +53,7 @@ services:
     volumes:
       - backups:/backups
       - storage:/app/storage
+    networks: [intern]
     depends_on:
       db:
         condition: service_healthy
@@ -58,21 +64,34 @@ services:
       target: app
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://app_user:${SERVICE_PASSWORD_64_APPUSER}@db:5432/servicerotirapid
+      DATABASE_URL: postgres://app_user:${APP_DB_PASSWORD:?}@db:5432/servicerotirapid
       # Adresa publică, fără / la final, ex. https://programari.domeniul-tau.ro
       APP_BASE_URL: ${APP_BASE_URL:?}
-      AUTH_SECRET: ${SERVICE_BASE64_64_AUTH}
+      AUTH_SECRET: ${AUTH_SECRET:?}
       # Dacă se schimbă, linkurile „vezi / anulează programarea” deja date nu mai merg.
-      BOOKING_LINK_SECRET: ${SERVICE_BASE64_64_BOOKINGLINK}
+      BOOKING_LINK_SECRET: ${BOOKING_LINK_SECRET:?}
       # Cloudflare Turnstile (gratuit). Fără chei serverul nu pornește, decât cu TURNSTILE_DISABLED=1.
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       TURNSTILE_DISABLED: ${TURNSTILE_DISABLED:-}
     volumes:
       - storage:/app/storage
+    networks:
+      intern: {}
+      proxy:
+        # Numele sub care o găsește Caddy: reverse_proxy servicerotirapid-app:3000
+        aliases: [servicerotirapid-app]
     depends_on:
       ops:
         condition: service_healthy
+
+networks:
+  # Rețeaua proprie: db și ops nu sunt vizibile pentru alte containere de pe server.
+  intern: {}
+  # Rețeaua lui Caddy (proiectul n8n-docker). Doar `app` e conectat la ea.
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-n8n-docker_default}
 
 volumes:
   pgdata:

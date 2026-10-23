@@ -1,0 +1,8 @@
+# Blocul pentru aplicație, de adăugat la finalul Caddyfile-ului existent
+# (/opt/n8n-docker/caddy_config/Caddyfile). Înlocuiește domeniul.
+programari.DOMENIU {
+	reverse_proxy servicerotirapid-app:3000 {
+		# IP-ul real al vizitatorului (pentru limitele anti-spam). Suprascrie orice valoare trimisă de vizitator.
+		header_up X-Real-IP {remote_host}
+	}
+}

@@ -6,7 +6,7 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 
 - [x] Niciun secret în cod sau în Git. `.env` e exclus din Git (`.gitignore`), iar `.env.example` conține doar valori false. Verificat: valorile din `.env` nu apar în istoricul Git.
 - [x] Cheile secrete (`AUTH_SECRET`, `BOOKING_LINK_SECRET`) sunt verificate la pornire: în producție serverul nu pornește dacă lipsesc sau au sub 32 de caractere (`src/instrumentation.ts`).
-- [x] În producție, parolele bazei de date și cheile secrete le generează Coolify (64 de caractere aleatorii, `SERVICE_...` în `docker-compose.prod.yml`) și stau doar în Coolify.
+- [x] În producție, parolele bazei de date și cheile secrete se generează pe server (`docker/server/generate-env.sh`, 64 de caractere aleatorii) și stau doar în `.env` de pe server, citibil doar de proprietar. Nu se afișează și nu trec prin chat sau Git.
 
 ## 2. Baza de date
 
@@ -33,9 +33,8 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 - [x] IP-ul și telefonul nu se salvează în clar: doar un HMAC (cu cheie secretă), păstrat cel mult 2 zile.
 - [x] IP-ul se citește doar din `X-Real-Ip` (pus de proxy). `X-Forwarded-For` poate fi falsificat, deci nu se folosește.
 - [x] Cloudflare Turnstile (gratuit): verificat pe server; testat cu cheile de test oficiale Cloudflare (programare reușită, fără blocări CSP). Oprit în dezvoltare fără chei; în producție serverul nu pornește fără chei, decât cu `TURNSTILE_DISABLED=1`.
-- [ ] **Vlad, înainte de lansare:** cont Cloudflare gratuit → Turnstile → widget pentru subdomeniul aplicației → cheile în Coolify.
-- [x] Verificat local cu Traefik 3.7 (proxy-ul folosit de Coolify), configurație implicită: un `X-Real-Ip` / `X-Forwarded-For` falsificat de vizitator e înlocuit cu IP-ul real.
-- [ ] **Pe server:** configurația proxy-ului Coolify nu are `forwardedHeaders.insecure` (`docs/productie.md`, B8).
+- [ ] **Vlad, înainte de lansare:** cont Cloudflare gratuit → Turnstile → widget pentru subdomeniul aplicației → cheile în `.env` pe server.
+- [x] Caddy (proxy-ul de pe VPS) suprascrie `X-Real-IP` cu IP-ul real (`header_up X-Real-IP {remote_host}` în `docker/server/Caddyfile.snippet`). Verificat local cu Caddy 2.11: un `X-Real-Ip` / `X-Forwarded-For` falsificat de vizitator e înlocuit.
 
 ## 5. Header-e de securitate (verificate cu `curl` și în testele Playwright)
 
@@ -67,7 +66,7 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 - [x] Export CSV al programărilor și clienților (panou → Meniu → Datele clienților). Fiecare export se notează în istoric.
 - [x] Ștergerea datelor unui client la cerere: nume, telefon, nr. de înmatriculare și observații șterse definitiv; programările viitoare anulate; linkurile personale oprite; programările rămân anonime în statistici.
 - [x] Ștergere automată: programările mai vechi decât perioada setată (implicit 24 de luni, editabilă în „Datele firmei”) + clienții rămași fără programări + sesiuni și linkuri expirate (`npm run gdpr:retention`, se poate rula de mai multe ori).
-- [ ] **Pe server:** task-ul programat zilnic `retention.sh` în Coolify (`docs/productie.md`, B7). Până atunci, pagina din panou promite o ștergere care nu rulează încă singură.
+- [ ] **Pe server:** cron-ul zilnic `retention.sh` (`docker/server/cron`, `docs/productie.md`). Până atunci, pagina din panou promite o ștergere care nu rulează încă singură.
 - [ ] **Vlad / patron:** confirmarea perioadei de păstrare (24 de luni).
 - [x] Fără marketing și fără SMS (decizia din 22.10.2026): nu se colectează acord de marketing.
 
@@ -84,11 +83,12 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 
 Codul și ghidul sunt gata; pașii de pe server îi faci tu după [productie.md](productie.md).
 
-- [x] `Dockerfile` multi-stage, utilizator non-root, healthcheck; `docker-compose.prod.yml` pentru Coolify. Testat local cap-coadă: build, migrări, seed, cont patron, programare cu Turnstile (chei de test), logare, încărcarea pozei, header-e.
+- [x] `Dockerfile` multi-stage, utilizator non-root, healthcheck; `docker-compose.prod.yml` pentru VPS (lângă n8n, în spatele lui Caddy). Testat local cap-coadă: build, migrări, seed, cont patron, programare cu Turnstile (chei de test), logare, încărcarea pozei, header-e.
 - [x] Migrările rulează controlat la fiecare deploy, în containerul `ops`, înainte de pornirea aplicației; doar adaugă, fiecare în tranzacție.
 - [x] Backup criptat (pg_dump + age; pe server doar cheia publică, cheia privată doar la tine) pentru baza de date și pozele încărcate; 7 zile local, 30 de zile în afara serverului (orice stocare S3). Testat local: backup, test de restaurare, restaurare reală, copie S3 (server S3 de test), refuzul backup-ului fără cheie și al cheii greșite.
-- [ ] **Pe server (Vlad):** securizarea VPS-ului (B2), instalarea Coolify (B4), deploy (B5), task-urile programate și primul test de restaurare pe server (B7).
-- [ ] **Vlad:** decizia pentru n8n (B1) și alegerea stocării externe pentru backup (B7). Până atunci, backup-ul există doar pe același server.
-- [ ] HTTPS prin Let's Encrypt: automat în Coolify după setarea domeniului (B5). HSTS e deja activ în producție.
+- [ ] **Pe server (Vlad):** securizarea VPS-ului, primul deploy, cron-ul și primul test de restaurare pe server (`docs/productie.md`).
+- [x] Decizia pentru n8n: aplicația stă alături, fără Coolify (23.10.2026); db și ops sunt într-o rețea Docker proprie, doar `app` e vizibilă pentru Caddy.
+- [ ] **Vlad:** alegerea stocării externe pentru backup. Până atunci, backup-ul există doar pe același server.
+- [ ] HTTPS prin Let's Encrypt: automat în Caddy după adăugarea domeniului. HSTS e deja activ în producție.
 - [ ] Datele doar în UE: VPS-ul și stocarea externă într-o regiune din UE (B0, B7).
-- [x] Monitorizare: `/api/health` (fără informații sensibile) + healthcheck-urile containerelor, folosite de Coolify.
+- [x] Monitorizare: `/api/health` (fără informații sensibile) + healthcheck-urile containerelor (`docker compose ps`).
