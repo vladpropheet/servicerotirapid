@@ -6,6 +6,10 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  // Erorile de bază de date apar în log fără valori (nume, telefoane).
+  const { installLogRedaction } = await import("./server/security/redact-logs");
+  installLogRedaction();
+
   const problems: string[] = [];
   const { secretsProblem, turnstileConfigProblem } = await import("./server/security/startup-checks");
   for (const problem of [secretsProblem(), turnstileConfigProblem()]) {

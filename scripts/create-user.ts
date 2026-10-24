@@ -5,6 +5,7 @@
 //   npm run admin:create -- --rol superadmin --telefon "07xx xxx xxx" --nume "Vlad"
 import { parseArgs } from "node:util";
 import { eq } from "drizzle-orm";
+import { isUniqueViolation } from "@/lib/db-errors";
 import { createUserWithTemporaryPassword } from "@/server/auth/users";
 import { closeDb, getDb } from "@/server/db/client";
 import { tenants } from "@/server/db/schema";
@@ -46,8 +47,15 @@ async function main(): Promise<void> {
 
 main()
   .catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Contul nu a fost creat:", message.includes("auth_user_username_uq") ? "există deja un cont cu acest telefon." : message);
+    // Fără mesajul complet: ar conține interogarea, cu numele și telefonul.
+    console.error(
+      "Contul nu a fost creat:",
+      isUniqueViolation(error, "auth_user_username_uq")
+        ? "există deja un cont cu acest telefon."
+        : error instanceof Error && error.name !== "DrizzleQueryError"
+          ? error.message
+          : "eroare la baza de date.",
+    );
     process.exitCode = 1;
   })
   .finally(() => closeDb());

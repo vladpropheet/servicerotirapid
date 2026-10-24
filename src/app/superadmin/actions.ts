@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { FormResult } from "@/components/admin/action-form";
+import { isUniqueViolation } from "@/lib/db-errors";
 import { normalizeRoPhone } from "@/lib/validation/phone";
 import {
   addOwner,
@@ -61,8 +62,7 @@ export async function createTenantAction(_previous: FormResult, formData: FormDa
       message: `Service creat. Parola temporară a patronului (se afișează o singură dată): ${result.temporaryPassword}`,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    if (message.includes("auth_user_username_uq")) return { error: "Există deja un cont cu telefonul patronului." };
+    if (isUniqueViolation(error, "auth_user_username_uq")) return { error: "Există deja un cont cu telefonul patronului." };
     throw error;
   }
 }
@@ -98,7 +98,7 @@ export async function addOwnerAction(_previous: FormResult, formData: FormData):
     refresh();
     return { error: null, ok: true, message: `Cont creat. Parola temporară (o singură dată): ${result.temporaryPassword}` };
   } catch (error) {
-    if (error instanceof Error && error.message.includes("auth_user_username_uq")) return { error: "Există deja un cont cu acest telefon." };
+    if (isUniqueViolation(error, "auth_user_username_uq")) return { error: "Există deja un cont cu acest telefon." };
     throw error;
   }
 }
