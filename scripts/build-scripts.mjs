@@ -5,7 +5,7 @@
 import { build } from "esbuild";
 
 await build({
-  entryPoints: ["scripts/migrate.ts", "scripts/seed.ts", "scripts/create-user.ts", "scripts/retention.ts"],
+  entryPoints: ["scripts/migrate.ts", "scripts/seed.ts", "scripts/create-user.ts", "scripts/reset-password.ts", "scripts/retention.ts"],
   outdir: "dist/scripts",
   outExtension: { ".js": ".mjs" },
   bundle: true,

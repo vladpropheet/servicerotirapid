@@ -73,7 +73,8 @@ export async function createUserWithTemporaryPassword(input: NewUser): Promise<{
  * Resetarea parolei fără SMS (CLAUDE.md §6): super-adminul generează o parolă temporară,
  * toate sesiunile utilizatorului se închid, iar la următoarea logare trebuie aleasă o parolă nouă.
  */
-export async function resetToTemporaryPassword(userId: string, actorUserId: string): Promise<string> {
+/** `actorUserId` null = din linia de comandă (scriptul reset-password). */
+export async function resetToTemporaryPassword(userId: string, actorUserId: string | null): Promise<string> {
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
   const username = await getDb().transaction(async (tx) => {

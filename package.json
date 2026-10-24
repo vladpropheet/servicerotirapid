@@ -17,6 +17,7 @@
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "db:studio": "drizzle-kit studio",
     "admin:create": "tsx --env-file=.env --conditions=react-server scripts/create-user.ts",
+    "admin:reset-password": "tsx --env-file=.env --conditions=react-server scripts/reset-password.ts",
     "gdpr:retention": "tsx --env-file=.env --conditions=react-server scripts/retention.ts",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
