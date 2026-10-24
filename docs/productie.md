@@ -214,18 +214,9 @@ sh docker/server/deploy.sh
 
 1. **Cheia de criptare (o singură dată):**
    ```
-   docker exec servicerotirapid-ops-1 age-keygen
+   cd /opt/servicerotirapid && sh docker/server/setup-backup-key.sh
    ```
-   Afișează două linii importante:
-   - `AGE-SECRET-KEY-1...` = cheia **privată**. O copiezi în managerul de parole (notă „Backup servicerotirapid – cheie privată”) și, ideal, o printezi. **Fără ea, backup-urile nu pot fi deschise de nimeni.** Nu o salvezi pe server.
-   - `# public key: age1...` = cheia **publică**. O pui în `.env`:
-     ```
-     nano /opt/servicerotirapid/.env
-     ```
-     la linia `BACKUP_AGE_RECIPIENT=age1...` (fără `# public key: `). Salvezi, apoi:
-     ```
-     cd /opt/servicerotirapid && docker compose -f docker-compose.prod.yml up -d
-     ```
+   Generează cheia, afișează **o singură dată** cheia privată (linia `AGE-SECRET-KEY-1...`) și salvează singur cheia publică în `.env`. Cheia privată o copiezi imediat în managerul de parole (notă „Backup servicerotirapid – cheie privată”); pe server nu rămâne. **Fără ea, backup-urile nu pot fi deschise de nimeni.** Scriptul refuză să înlocuiască o cheie existentă.
 2. **Primul backup:**
    ```
    docker exec servicerotirapid-ops-1 backup.sh
