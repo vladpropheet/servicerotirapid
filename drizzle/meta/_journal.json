@@ -22,6 +22,13 @@
       "when": 1792692587247,
       "tag": "0002_row_level_security",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792833494213,
+      "tag": "0003_tenant_logo",
+      "breakpoints": true
     }
   ]
 }

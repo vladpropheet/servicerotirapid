@@ -8,7 +8,7 @@ import { formatRoPhone } from "@/lib/format";
 import { getTenantProfile } from "@/server/admin/tenant-profile";
 import { requireAdmin } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
-import { updateProfileAction, uploadFacadeAction } from "./actions";
+import { removeLogoAction, updateProfileAction, uploadFacadeAction, uploadLogoAction } from "./actions";
 
 export const metadata: Metadata = { title: "Datele firmei", robots: { index: false, follow: false } };
 
@@ -28,6 +28,28 @@ async function Content() {
   return (
     <AdminFrame ctx={ctx} active="/admin/meniu">
       <PageTitle>Datele firmei</PageTitle>
+
+      <Card>
+        <h2 className="mb-3 text-xl font-bold">Logo</h2>
+        {tenant.logoMediaId ? (
+          // eslint-disable-next-line @next/next/no-img-element -- logo servit de aplicație, dimensiune variabilă
+          <img src={`/${tenant.slug}/logo?v=${tenant.logoMediaId}`} alt="Logo-ul service-ului" className="mb-3 max-h-32 w-auto rounded bg-white p-2" />
+        ) : (
+          <p className="mb-3">Niciun logo încă. Pe pagina de programare numele service-ului apare scris cu litere mari.</p>
+        )}
+        <ActionForm action={uploadLogoAction}>
+          <label className="flex flex-col gap-1 font-semibold">
+            Alege logo-ul (JPG, PNG sau WEBP, maxim 5 MB; cel mai bine pe fundal alb sau transparent)
+            <input type="file" name="logo" accept="image/jpeg,image/png,image/webp" required className="min-h-12 text-lg" />
+          </label>
+          <SubmitButton pendingText="Se încarcă…">Încarcă logo-ul</SubmitButton>
+        </ActionForm>
+        {tenant.logoMediaId && (
+          <ActionForm action={removeLogoAction} className="mt-3">
+            <SubmitButton variant="secondary" pendingText="Se scoate…">Scoate logo-ul</SubmitButton>
+          </ActionForm>
+        )}
+      </Card>
 
       <Card>
         <h2 className="mb-3 text-xl font-bold">Poza fațadei</h2>

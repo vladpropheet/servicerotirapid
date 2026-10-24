@@ -38,6 +38,7 @@ export type PublicTenantInfo = {
   timezone: string;
   retentionMonths: number;
   facadeMediaId: string | null;
+  logoMediaId: string | null;
 };
 
 export async function loadTenantInfo(t: TenantTx): Promise<PublicTenantInfo> {
@@ -55,6 +56,7 @@ export async function loadTenantInfo(t: TenantTx): Promise<PublicTenantInfo> {
       timezone: tenants.timezone,
       retentionMonths: tenants.retentionMonths,
       facadeMediaId: tenants.facadeMediaId,
+      logoMediaId: tenants.logoMediaId,
     })
     .from(tenants)
     .where(eq(tenants.id, t.tenantId))

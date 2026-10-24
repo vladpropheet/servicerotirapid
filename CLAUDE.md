@@ -103,6 +103,7 @@ Toate tabelele cu date ale unui service au coloana `tenant_id`. Minim:
 ## 5. Fluxul public de programare (3 pași, mobile-first)
 
 Design de referință: **demo-ul aprobat** (fundal deschis #F6F5F2, text #18181B, accent portocaliu #C2410C, galben #FACC15 pentru etichete, fonturi Barlow / Barlow Condensed). Sus: poza fațadei service-ului, încărcată de patron din admin. **Logo nu există**: folosește numele service-ului ca logo text. Nu genera imagini.
+   - *Decizie 24.10.2026:* patronul poate încărca un logo din „Datele firmei” (Roți Rapid are acum unul, trimis de Vlad); fără logo rămâne numele ca text. Iconița aplicației (PWA, doar panoul) e pictograma trimisă de Vlad, în `public/icons/`.
 
 1. **Alege serviciul.** Lista pe categorii. Clientul alege tipul vehiculului, apoi mărimea jantei (cu opțiunea „nu știu”), tipul jantei, numărul de roți (implicit 4) și bifa Runflat dacă e cazul. Vede **prețul estimativ**, cu mențiunea „prețul final se stabilește în service”. Poate adăuga încă un serviciu. Serviciile care nu se programează online (de ex. reparațiile de pană) apar cu preț și cu butonul „Sună acum”, nu cu programare. **Diferența dintre „Schimb roți complete” și „Pachet complet anvelope” trebuie explicată clar pe ecran.**
 2. **Alege ziua și ora.** Se afișează doar intervalele libere, calculate din program, zile libere, intervale blocate, durata totală, capacitatea online, timpul minim înainte de programare și numărul maxim de zile înainte.

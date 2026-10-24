@@ -45,11 +45,27 @@ async function TenantContent({ params }: { params: PageProps<"/[slug]">["params"
           className="h-44 w-full object-cover sm:h-64"
         />
       )}
+      {info.logoMediaId && (
+        <div className="bg-white px-4 py-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- logo încărcat de patron, servit de aplicație */}
+          <img
+            src={`/${info.slug}/logo?v=${info.logoMediaId}`}
+            alt={info.displayName}
+            className="mx-auto max-h-28 w-auto max-w-full sm:max-h-36"
+          />
+        </div>
+      )}
       <header className="bg-zinc-900 px-4 pb-6 pt-8 text-white">
         <div className="mx-auto max-w-2xl">
-          {/* Logo text: service-ul nu are logo (CLAUDE.md §5). Poza fațadei o încarcă patronul din admin. */}
-          <p className="font-display text-4xl font-bold uppercase leading-none tracking-tight">{info.displayName}</p>
-          <p className="mt-2 text-zinc-300">{info.workAddress}</p>
+          {/* Logo-ul îl încarcă patronul din admin („Datele firmei”). Fără logo, numele apare ca logo text (CLAUDE.md §5). */}
+          <p
+            className={
+              info.logoMediaId ? "sr-only" : "font-display text-4xl font-bold uppercase leading-none tracking-tight"
+            }
+          >
+            {info.displayName}
+          </p>
+          <p className={info.logoMediaId ? "text-zinc-300" : "mt-2 text-zinc-300"}>{info.workAddress}</p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="rounded bg-label px-2 py-1 text-sm font-bold uppercase text-zinc-900">
               Programare online

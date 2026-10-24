@@ -30,6 +30,7 @@ const ACTION_LABEL: Record<string, string> = {
   "sms_template.update": "Text SMS modificat",
   "tenant.update": "Datele firmei",
   "facade.update": "Poza fațadei",
+  "logo.update": "Logo",
   "review.confirm": "Valoare confirmată („E corect”)",
   "gdpr.export": "Date descărcate (CSV)",
   "customer.erase": "Datele unui client șterse (la cererea lui)",

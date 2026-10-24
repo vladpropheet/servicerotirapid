@@ -17,7 +17,7 @@ import { createClosure, deleteClosure } from "@/server/admin/closures";
 import { endSupportSession, startSupportSession } from "@/server/admin/platform";
 import { markReviewed } from "@/server/admin/review";
 import { saveWeeklyHours } from "@/server/admin/schedule";
-import { readFacade, saveFacade } from "@/server/admin/tenant-profile";
+import { readTenantImage, saveTenantImage } from "@/server/admin/tenant-profile";
 import { createUserWithTemporaryPassword } from "@/server/auth/users";
 import { reserveOnlineBooking } from "@/server/booking/reserve";
 import { closeDb } from "@/server/db/client";
@@ -163,11 +163,18 @@ describe("patronul A nu poate citi sau modifica nimic din B", () => {
     expect(await ownerDb().select().from(closures).where(eq(closures.id, closureOfB))).toHaveLength(1);
   });
 
-  it("poza fațadei lui A nu se vede prin contextul lui B", async () => {
-    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
-    expect(await asA((t) => saveFacade(t, ownerA, png))).toEqual({ ok: true });
-    expect((await asA((t) => readFacade(t)))?.contentType).toBe("image/png");
-    expect(await withTenant(tenantB, (t) => readFacade(t))).toBeNull();
+  it("poza fațadei și logo-ul lui A nu se văd prin contextul lui B", async () => {
+    // O imagine PNG reală, 1x1 pixel.
+    const png = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC", "base64"));
+    for (const kind of ["facade", "logo"] as const) {
+      expect(await asA((t) => saveTenantImage(t, ownerA, kind, png))).toEqual({ ok: true });
+      // Salvată ca WebP (micșorată, fără metadate).
+      expect((await asA((t) => readTenantImage(t, kind)))?.contentType).toBe("image/webp");
+      expect(await withTenant(tenantB, (t) => readTenantImage(t, kind))).toBeNull();
+    }
+    // Un fișier care doar începe ca PNG, dar nu e o imagine, e refuzat.
+    const fake = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+    expect(await asA((t) => saveTenantImage(t, ownerA, "logo", fake))).toMatchObject({ ok: false });
   });
 });
 

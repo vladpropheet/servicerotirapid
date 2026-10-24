@@ -1,10 +1,10 @@
-// Fișiere încărcate de patron (deocamdată doar poza fațadei).
+// Fișiere încărcate de patron: poza fațadei și logo-ul.
 import { sql } from "drizzle-orm";
 import { check, integer, pgTable, smallint, text, unique } from "drizzle-orm/pg-core";
 import { createdAtColumn, idColumn } from "./_shared";
 import { tenantIdColumn } from "./platform";
 
-export const MEDIA_KINDS = ["facade"] as const;
+export const MEDIA_KINDS = ["facade", "logo"] as const;
 export const MEDIA_CONTENT_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export const media = pgTable(
@@ -23,7 +23,7 @@ export const media = pgTable(
   },
   (t) => [
     unique("media_tenant_id_uq").on(t.tenantId, t.id),
-    check("media_kind_ck", sql`${t.kind} in ('facade')`),
+    check("media_kind_ck", sql`${t.kind} in ('facade', 'logo')`),
     check("media_type_ck", sql`${t.contentType} in ('image/jpeg', 'image/png', 'image/webp')`),
     check("media_bytes_ck", sql`${t.bytes} between 1 and 10485760`),
   ],

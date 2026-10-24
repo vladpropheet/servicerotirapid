@@ -34,6 +34,7 @@ ENV NODE_ENV=production \
 # Codul aparține lui root (aplicația nu și-l poate modifica); doar cache-ul Next.js și pozele încărcate pot fi scrise.
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
 RUN mkdir -p .next/cache storage && chown -R node:node .next/cache storage
 USER node
 EXPOSE 3000

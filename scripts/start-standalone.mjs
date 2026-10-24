@@ -9,8 +9,9 @@ import { parseArgs } from "node:util";
 
 const { values } = parseArgs({ options: { port: { type: "string", short: "p" } }, strict: false });
 
-// Fișierele statice (CSS, JS) nu sunt copiate automat lângă server; în Docker le copiază Dockerfile-ul.
+// Fișierele statice (CSS, JS, iconițe) nu sunt copiate automat lângă server; în Docker le copiază Dockerfile-ul.
 cpSync(".next/static", ".next/standalone/.next/static", { recursive: true });
+cpSync("public", ".next/standalone/public", { recursive: true });
 
 process.env.PORT = String(values.port ?? process.env.PORT ?? "3000");
 await import(pathToFileURL(path.resolve(".next/standalone/server.js")).href);

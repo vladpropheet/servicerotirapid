@@ -47,6 +47,10 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 - Contra: `script-src` conține `'unsafe-inline'`, deci CSP-ul nu mai oprește un script injectat, dacă ar apărea o greșeală care permite injectarea.
 - Alternativă: CSP cu nonce + randare dinamică a tuturor paginilor. O putem activa oricând (modificare în `next.config.ts` + un `proxy.ts`), dacă viteza pe telefoane vechi contează mai puțin.
 
+## 5b. Fișiere încărcate (poza fațadei, logo)
+
+- [x] Tipul verificat după conținut, maxim 5 MB, decodate și re-salvate ca WebP pe server (un fișier care doar se dă drept imagine e refuzat). Metadatele (inclusiv locația GPS din pozele făcute cu telefonul) se șterg. Numele fișierului îl alege serverul.
+
 ## 6. Linkurile „vezi / anulează programarea”
 
 - [x] Token semnat (HMAC-SHA256), 22 de caractere, fără ID-uri ghicibile. În baza de date stă doar hash-ul. Expiră la 7 zile după programare. Se poate revoca.

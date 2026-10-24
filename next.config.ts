@@ -43,6 +43,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Imaginea Docker de producție conține doar serverul și fișierele de care are nevoie (fără node_modules complet).
   output: "standalone",
+  // sharp (micșorarea pozelor încărcate) are biblioteci native separate (libvips); trasarea automată nu le
+  // include pe toate (de ex. fișierele .dll pe Windows), deci le adăugăm explicit.
+  outputFileTracingIncludes: { "/*": ["./node_modules/@img/**/*"] },
   cacheComponents: true,
   partialPrefetching: true,
   // Nu anunțăm în header-e ce tehnologie folosim.

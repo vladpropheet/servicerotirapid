@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import type { FormResult } from "@/components/admin/action-form";
 import { normalizeRoPhone } from "@/lib/validation/phone";
-import { saveFacade, updateTenantProfile } from "@/server/admin/tenant-profile";
+import { removeTenantLogo, saveTenantImage, updateTenantProfile } from "@/server/admin/tenant-profile";
 import { auditActor, requireAdmin } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
 
@@ -52,8 +52,26 @@ export async function uploadFacadeAction(_previous: FormResult, formData: FormDa
   const file = formData.get("poza");
   if (!(file instanceof File) || file.size === 0) return { error: "Alege o poză." };
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const result = await withTenant(ctx.tenantId, (t) => saveFacade(t, auditActor(ctx), bytes));
+  const result = await withTenant(ctx.tenantId, (t) => saveTenantImage(t, auditActor(ctx), "facade", bytes));
   if (!result.ok) return { error: result.error };
   refresh();
   return { error: null, ok: true, message: "Poza a fost salvată. Apare sus pe pagina de programare." };
+}
+
+export async function uploadLogoAction(_previous: FormResult, formData: FormData): Promise<FormResult> {
+  const ctx = await requireAdmin();
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) return { error: "Alege logo-ul." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const result = await withTenant(ctx.tenantId, (t) => saveTenantImage(t, auditActor(ctx), "logo", bytes));
+  if (!result.ok) return { error: result.error };
+  refresh();
+  return { error: null, ok: true, message: "Logo-ul a fost salvat. Apare sus pe pagina de programare, în locul numelui." };
+}
+
+export async function removeLogoAction(): Promise<FormResult> {
+  const ctx = await requireAdmin();
+  await withTenant(ctx.tenantId, (t) => removeTenantLogo(t, auditActor(ctx)));
+  refresh();
+  return { error: null, ok: true, message: "Logo-ul a fost scos. Pagina afișează din nou numele." };
 }
