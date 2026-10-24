@@ -116,11 +116,11 @@ Toate comenzile din partea B le rulezi **pe server**, în sesiunea SSH (`ssh -i 
 
 ### B2. Subdomeniul (DNS)
 
-1. Alegi subdomeniul aplicației, de exemplu `programari.DOMENIU`.
+1. Alegi subdomeniul aplicației, de exemplu `rotirapid.n8n-propheetai.xyz`.
 2. **Unde:** la firma unde e administrat domeniul (secțiunea DNS). Adaugi:
    - înregistrare **A**: `programari` → `51.83.185.231`;
    - înregistrare **AAAA**: `programari` → `2001:41d0:601:1100::6844`.
-3. **Verificare (unde:** PowerShell pe PC**):** `Resolve-DnsName programari.DOMENIU`. **Rezultat corect:** apar cele două adrese (poate dura de la câteva minute la câteva ore).
+3. **Verificare (unde:** PowerShell pe PC**):** `Resolve-DnsName rotirapid.n8n-propheetai.xyz`. **Rezultat corect:** apar cele două adrese (poate dura de la câteva minute la câteva ore).
 
 ### B3. Codul pe server (cheie GitHub doar pentru citire)
 
@@ -138,7 +138,7 @@ Toate comenzile din partea B le rulezi **pe server**, în sesiunea SSH (`ssh -i 
 ### B4. Fișierul cu secrete (.env)
 
 1. ```
-   cd /opt/servicerotirapid && sh docker/server/generate-env.sh https://programari.DOMENIU
+   cd /opt/servicerotirapid && sh docker/server/generate-env.sh https://rotirapid.n8n-propheetai.xyz
    ```
    **Ce face:** creează `.env` cu parole și chei aleatorii de 64 de caractere. Nu le afișează și nu suprascrie un `.env` existent.
    **Rezultat corect:** `Am creat .env (doar proprietarul îl poate citi).`
@@ -171,7 +171,7 @@ sh docker/server/deploy.sh
    ```
    Mergi la final (după ultima acoladă `}`), lași un rând liber și adaugi blocul din [docker/server/Caddyfile.snippet](../docker/server/Caddyfile.snippet), cu domeniul tău:
    ```
-   programari.DOMENIU {
+   rotirapid.n8n-propheetai.xyz {
    	reverse_proxy servicerotirapid-app:3000 {
    		header_up X-Real-IP {remote_host}
    	}
@@ -186,7 +186,7 @@ sh docker/server/deploy.sh
    **Dacă apare o eroare:** nu se aplică nimic. Pui copia înapoi: `sudo cp /opt/n8n-docker/caddy_config/Caddyfile.inainte-de-programari /opt/n8n-docker/caddy_config/Caddyfile` și îmi trimiți mesajul.
 4. **Verificare (unde:** PowerShell pe PC**):**
    ```
-   curl.exe -s https://programari.DOMENIU/api/health
+   curl.exe -s https://rotirapid.n8n-propheetai.xyz/api/health
    ```
    **Rezultat corect:** `{"status":"ok"}` (prima cerere poate dura câteva secunde: Caddy cere certificatul). Verifică și că n8n merge în continuare la adresa lui.
 
@@ -203,7 +203,12 @@ sh docker/server/deploy.sh
 3. ```
    docker exec servicerotirapid-ops-1 create-user.sh --rol superadmin --telefon "07xx xxx xxx" --nume "Vlad"
    ```
-   Contul tău. Te loghezi pe `https://programari.DOMENIU/admin/login`, schimbi parola și activezi verificarea în doi pași.
+   Contul tău. Te loghezi pe `https://rotirapid.n8n-propheetai.xyz/admin/login`, schimbi parola și activezi verificarea în doi pași.
+4. **Parolă uitată sau predarea contului către patron:**
+   ```
+   docker exec servicerotirapid-ops-1 reset-password.sh --telefon "0766 777 130"
+   ```
+   Afișează o parolă temporară nouă, o singură dată, și deconectează contul de pe toate dispozitivele. La logare se cere o parolă nouă.
 
 ### B8. Backup criptat și task-urile zilnice
 
@@ -243,7 +248,7 @@ sh docker/server/deploy.sh
 
 ### B9. Cloudflare Turnstile (anti-spam, gratuit)
 
-1. Cont gratuit pe cloudflare.com → **Turnstile** → **Add widget**. Hostname: `programari.DOMENIU`, mod **Managed**.
+1. Cont gratuit pe cloudflare.com → **Turnstile** → **Add widget**. Hostname: `rotirapid.n8n-propheetai.xyz`, mod **Managed**.
 2. În `/opt/servicerotirapid/.env`: completezi `TURNSTILE_SITE_KEY` și `TURNSTILE_SECRET_KEY` și pui `#` în fața liniei `TURNSTILE_DISABLED=1`.
 3. `cd /opt/servicerotirapid && docker compose -f docker-compose.prod.yml up -d`
 4. **Rezultat corect:** o programare de test merge; în politica de confidențialitate apare paragraful despre Cloudflare.
@@ -252,8 +257,8 @@ sh docker/server/deploy.sh
 
 | Ce | Cum | Rezultat corect |
 |---|---|---|
-| HTTPS | `https://programari.DOMENIU/roti-rapid` pe telefon | lacăt, pagina de programare |
-| Header-e de securitate | PowerShell: `curl.exe -sI https://programari.DOMENIU/roti-rapid` | `Strict-Transport-Security`, `Content-Security-Policy`, `X-Frame-Options: DENY` |
+| HTTPS | `https://rotirapid.n8n-propheetai.xyz/roti-rapid` pe telefon | lacăt, pagina de programare |
+| Header-e de securitate | PowerShell: `curl.exe -sI https://rotirapid.n8n-propheetai.xyz/roti-rapid` | `Strict-Transport-Security`, `Content-Security-Policy`, `X-Frame-Options: DENY` |
 | Baza de date închisă | PowerShell: `Test-NetConnection 51.83.185.231 -Port 5432` | `TcpTestSucceeded : False` |
 | Programare de test | o faci de pe telefon, apoi o anulezi din link | confirmare, apoi „Programarea a fost anulată” |
 | Panou | logare patron, „Azi” / „Mâine” | programarea de test apare |
