@@ -195,7 +195,7 @@ export function ManualBookingForm({ pricing, display, slotStepMin, defaultDate }
         {err("customer.phone")}
         <label className="flex flex-col gap-1 font-semibold">
           Nr. înmatriculare (opțional)
-          <input value={plate} onChange={(e) => setPlate(e.target.value)} autoComplete="off" className={inputClass} />
+          <input value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} autoComplete="off" autoCapitalize="characters" className={inputClass} />
         </label>
         {err("customer.plate")}
         <label className="flex flex-col gap-1 font-semibold">

@@ -557,8 +557,10 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
               id="nr-auto"
               label="Număr de înmatriculare (opțional)"
               value={plate}
-              onChange={edited("customer.plate", setPlate)}
+              // Numărul se scrie mereu cu majuscule, oricum ar tasta clientul.
+              onChange={(value) => edited("customer.plate", setPlate)(value.toUpperCase())}
               autoComplete="off"
+              autoCapitalize="characters"
               placeholder="AG 12 ABC"
               error={fieldErrors["customer.plate"]}
             />
@@ -734,6 +736,7 @@ function TextField({
   type?: string;
   inputMode?: "tel" | "text";
   autoComplete?: string;
+  autoCapitalize?: "characters" | "words" | "off";
   placeholder?: string;
 }) {
   return (

@@ -7,6 +7,7 @@ import { FINAL_PRICE_NOTE } from "@/domain/pricing";
 import { formatLongDate, formatRoPhone, formatTime, telHref } from "@/lib/format";
 import { loadBookingSummary, type BookingSummary } from "@/server/booking/manage";
 import { CancelForm } from "./cancel-form";
+import { SaveLink } from "./save-link";
 
 // Pagina din linkul „vezi / anulează programarea”: ecranul de succes după programare
 // și locul din care clientul își anulează programarea. Nu se indexează (vezi next.config.ts).
@@ -114,11 +115,7 @@ function Summary({
         <p className="text-sm text-zinc-600">{FINAL_PRICE_NOTE}</p>
       </section>
 
-      {!cancelled && (
-        <p className="rounded-lg bg-amber-50 p-4">
-          <strong>Păstrează acest link</strong> (pune-l la favorite): din el îți vezi sau îți anulezi programarea.
-        </p>
-      )}
+      {!cancelled && <SaveLink url={`${process.env.APP_BASE_URL ?? ""}/p/${token}`} />}
 
       {summary.cancelDeadline !== null ? (
         <CancelForm

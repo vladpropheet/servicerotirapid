@@ -56,7 +56,8 @@ test("clientul face o programare în 3 pași și o anulează din link", async ({
   await page.getByLabel("Nume și prenume").fill("Ion Popescu");
   await expect(page.getByText("Scrie numele tău (cel puțin 2 litere).")).toHaveCount(0);
   await page.getByLabel("Telefon mobil").fill("0722 123 456");
-  await page.getByLabel("Număr de înmatriculare (opțional)").fill("ag 12 abc");
+  await page.getByLabel("Număr de înmatriculare (opțional)").pressSequentially("ag 12 abc");
+  await expect(page.getByLabel("Număr de înmatriculare (opțional)")).toHaveValue("AG 12 ABC");
   await page.getByRole("checkbox", { name: /Sunt de acord cu prelucrarea datelor/ }).check();
   await shot(page, "3-datele-tale");
   await page.getByRole("button", { name: "Confirmă programarea" }).click();
@@ -69,6 +70,13 @@ test("clientul face o programare în 3 pași și o anulează din link", async ({
   await expect(page.getByText("Pachet complet anvelope (pe roată) × 4")).toBeVisible();
   await expect(page.getByText("Autoturism · jantă aliaj · 4 roți · AG12ABC")).toBeVisible();
   await expect(page.getByText("0722")).toHaveCount(0); // telefonul clientului nu apare pe pagină
+  // Fără SMS, linkul personal se vede pe ecran și se poate copia.
+  const link = page.getByRole("textbox", { name: "Linkul programării" });
+  await expect(link).toHaveValue(new RegExp(`/p/[A-Za-z0-9_-]{22}$`));
+  expect(new URL(await link.inputValue()).pathname).toBe(new URL(page.url()).pathname);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "Copiază linkul" }).click();
+  await expect(page.getByRole("button", { name: "Copiat ✓" })).toBeVisible();
   await shot(page, "4-confirmare");
 
   // Anularea cere confirmare.
