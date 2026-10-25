@@ -1,8 +1,8 @@
 # Ghidul patronului – programări online Service Roți Rapid
 
 Aplicația are două părți:
-- **Pagina de programare** pentru clienți: **rotirapid.n8n-propheetai.xyz/roti-rapid**. Clienții își fac singuri programarea de pe telefon, fără cont.
-- **Panoul tău**: **rotirapid.n8n-propheetai.xyz/admin**. Aici vezi programările și schimbi singur prețurile, programul și setările.
+- **Pagina de programare** pentru clienți: **programari.n8n-propheetai.xyz/roti-rapid**. Clienții își fac singuri programarea de pe telefon, fără cont.
+- **Panoul tău**: **programari.n8n-propheetai.xyz/admin**. Aici vezi programările și schimbi singur prețurile, programul și setările.
 
 Nu primești SMS-uri: programările noi apar în panou, la **Azi** și **Mâine**.
 
@@ -10,7 +10,7 @@ Nu primești SMS-uri: programările noi apar în panou, la **Azi** și **Mâine*
 
 ## 1. Prima intrare și aplicația pe telefon
 
-1. Deschide pe telefon **rotirapid.n8n-propheetai.xyz/admin**.
+1. Deschide pe telefon **programari.n8n-propheetai.xyz/admin**.
 2. Scrie **telefonul tău** (0766 777 130) și **parola temporară** primită.
 3. Aplicația îți cere imediat o **parolă nouă**, aleasă de tine (minim 12 caractere). Doar tu o știi.
 4. Pune aplicația pe ecranul telefonului, ca să o deschizi ca pe orice aplicație:

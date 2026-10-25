@@ -1,6 +1,6 @@
 # Lista de verificare a securității și GDPR
 
-Stare la 25.10.2026, cu aplicația în producție la `https://rotirapid.n8n-propheetai.xyz`. `[x]` = făcut și verificat (prin teste automate sau direct pe server); `[ ]` = rămâne de făcut (cu persoana responsabilă).
+Stare la 25.10.2026, cu aplicația în producție la `https://programari.n8n-propheetai.xyz`. `[x]` = făcut și verificat (prin teste automate sau direct pe server); `[ ]` = rămâne de făcut (cu persoana responsabilă).
 
 **Verificat din exterior, pe server (25.10.2026):** porturile 5432 (baza de date) și 3000 (aplicația) sunt închise; HTTPS, HSTS, CSP și `X-Frame-Options: DENY` sunt active; după oprirea Evolution API, sunt deschise doar 22, 80 și 443.
 
@@ -35,7 +35,7 @@ Stare la 25.10.2026, cu aplicația în producție la `https://rotirapid.n8n-prop
 - [x] IP-ul și telefonul nu se salvează în clar: doar un HMAC (cu cheie secretă), păstrat cel mult 2 zile.
 - [x] IP-ul se citește doar din `X-Real-Ip` (pus de proxy). `X-Forwarded-For` poate fi falsificat, deci nu se folosește.
 - [x] Cloudflare Turnstile (gratuit): verificat pe server; testat cu cheile de test oficiale Cloudflare (programare reușită, fără blocări CSP). Oprit în dezvoltare fără chei; în producție serverul nu pornește fără chei, decât cu `TURNSTILE_DISABLED=1`.
-- [x] Cloudflare Turnstile activ în producție (25.10.2026): widget pentru `rotirapid.n8n-propheetai.xyz`, cheile în `.env` pe server; politica de confidențialitate pomenește Cloudflare.
+- [x] Cloudflare Turnstile activ în producție (25.10.2026): widget pentru `programari.n8n-propheetai.xyz`, cheile în `.env` pe server; politica de confidențialitate pomenește Cloudflare.
 - [x] Caddy (proxy-ul de pe VPS) suprascrie `X-Real-IP` cu IP-ul real (`header_up X-Real-IP {remote_host}` în `docker/server/Caddyfile.snippet`). Verificat local cu Caddy 2.11: un `X-Real-Ip` / `X-Forwarded-For` falsificat de vizitator e înlocuit.
 
 ## 5. Header-e de securitate (verificate cu `curl` și în testele Playwright)

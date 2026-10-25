@@ -1,8 +1,15 @@
-# Blocul pentru aplicație, de adăugat la finalul Caddyfile-ului existent
-# (/opt/n8n-docker/caddy_config/Caddyfile). Înlocuiește domeniul.
-programari.DOMENIU {
+# Blocurile pentru aplicație, de adăugat la finalul Caddyfile-ului lui n8n
+# (/opt/n8n-docker/caddy_config/Caddyfile). Ghid: docs/productie.md, pasul „Caddy”.
+
+# Adresa aplicației (din 25.10.2026).
+programari.n8n-propheetai.xyz {
 	reverse_proxy servicerotirapid-app:3000 {
 		# IP-ul real al vizitatorului (pentru limitele anti-spam). Suprascrie orice valoare trimisă de vizitator.
 		header_up X-Real-IP {remote_host}
 	}
+}
+
+# Adresa veche: trimite totul la cea nouă, cu aceeași cale (linkurile vechi merg în continuare).
+rotirapid.n8n-propheetai.xyz {
+	redir https://programari.n8n-propheetai.xyz{uri} permanent
 }
