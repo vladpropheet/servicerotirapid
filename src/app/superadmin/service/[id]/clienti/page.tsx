@@ -2,22 +2,24 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
-import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { SuperadminFrame } from "@/components/admin/superadmin-frame";
 import { buttonClass, Card, inputClass, Notice, PageTitle } from "@/components/admin/ui";
 import { formatLongDate, formatRoPhone } from "@/lib/format";
 import { getTenantProfile } from "@/server/admin/tenant-profile";
-import { requireAdmin } from "@/server/auth/session";
+import { requireSuperadminTenant } from "@/server/auth/session";
 import { findCustomers, getCustomerForErase } from "@/server/gdpr/erase";
 import { withTenant } from "@/server/tenant";
 import { eraseCustomerAction } from "./actions";
 
 export const metadata: Metadata = { title: "Datele clienților", robots: { index: false, follow: false } };
 
-export default function CustomerDataPage(props: PageProps<"/admin/date">) {
+type Props = PageProps<"/superadmin/service/[id]/clienti">;
+
+export default function CustomerDataPage(props: Props) {
   return (
-    <Suspense fallback={<AdminSkeleton />}>
-      <Content searchParams={props.searchParams} />
+    <Suspense fallback={<p className="p-4 text-lg">Se încarcă…</p>}>
+      <Content params={props.params} searchParams={props.searchParams} />
     </Suspense>
   );
 }
@@ -26,22 +28,24 @@ function param(value: string | string[] | undefined): string {
   return typeof value === "string" ? value.slice(0, 100) : "";
 }
 
-async function Content({ searchParams }: Pick<PageProps<"/admin/date">, "searchParams">) {
-  const ctx = await requireAdmin();
-  const params = await searchParams;
-  const query = param(params.cauta).trim();
-  const eraseId = param(params.sterge);
-  const erased = /^(\d+)-(\d+)$/.exec(param(params.sters));
+async function Content({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
+  const { id } = await params;
+  const ctx = await requireSuperadminTenant(id);
+  const query = await searchParams;
+  const search = param(query.cauta).trim();
+  const eraseId = param(query.sterge);
+  const erased = /^(\d+)-(\d+)$/.exec(param(query.sters));
   const now = new Date();
+  const base = `/superadmin/service/${ctx.tenantId}/clienti`;
 
   const { matches, toErase, retentionMonths } = await withTenant(ctx.tenantId, async (t) => ({
-    matches: query ? await findCustomers(t, query) : [],
+    matches: search ? await findCustomers(t, search) : [],
     toErase: /^[0-9a-f-]{36}$/.test(eraseId) ? await getCustomerForErase(t, eraseId, now) : null,
     retentionMonths: (await getTenantProfile(t)).retentionMonths,
   }));
 
   return (
-    <AdminFrame ctx={ctx} active="/admin/meniu">
+    <SuperadminFrame tenantId={ctx.tenantId} tenantName={ctx.tenantName} active="clienti">
       <PageTitle>Datele clienților</PageTitle>
 
       {erased && (
@@ -58,13 +62,13 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/date">, "searchP
           șterge-le când nu mai ai nevoie de ele.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <form method="post" action="/admin/date/export">
+          <form method="post" action={`${base}/export`}>
             <input type="hidden" name="tip" value="programari" />
             <button type="submit" className={`${buttonClass.secondary} w-full`}>
               Descarcă programările
             </button>
           </form>
-          <form method="post" action="/admin/date/export">
+          <form method="post" action={`${base}/export`}>
             <input type="hidden" name="tip" value="clienti" />
             <button type="submit" className={`${buttonClass.secondary} w-full`}>
               Descarcă clienții
@@ -76,22 +80,22 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/date">, "searchP
       <Card>
         <h2 className="mb-2 text-xl font-bold">Șterge datele unui client</h2>
         <p className="mb-3">
-          Dacă un client îți cere să-i ștergi datele, caută-l după telefon, nume sau numărul mașinii.
+          Dacă un client cere ștergerea datelor, caută-l după telefon, nume sau numărul mașinii.
           Verifică întâi că persoana care cere e chiar clientul (de exemplu, sună de pe numărul lui).
         </p>
-        <form method="get" action="/admin/date" className="flex flex-col gap-2">
+        <form method="get" action={base} className="flex flex-col gap-2">
           <label htmlFor="cauta" className="font-semibold">
             Telefon, nume sau nr. de înmatriculare
           </label>
           <div className="flex gap-2">
-            <input id="cauta" name="cauta" defaultValue={query} minLength={3} required className={inputClass} />
+            <input id="cauta" name="cauta" defaultValue={search} minLength={3} required className={inputClass} />
             <button type="submit" className={buttonClass.primary}>
               Caută
             </button>
           </div>
         </form>
 
-        {query && matches.length === 0 && <p className="mt-3">Niciun client găsit pentru „{query}”.</p>}
+        {search && matches.length === 0 && <p className="mt-3">Niciun client găsit pentru „{search}”.</p>}
         {matches.length > 0 && (
           <ul className="mt-3 flex flex-col gap-2">
             {matches.map((customer) => (
@@ -104,10 +108,7 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/date">, "searchP
                     {customer.lastStartsAt ? `, ultima: ${formatLongDate(customer.lastStartsAt.getTime(), ctx.timeZone)}` : ""}
                   </p>
                 </div>
-                <Link
-                  href={`/admin/date?cauta=${encodeURIComponent(query)}&sterge=${customer.id}#confirma`}
-                  className={buttonClass.danger}
-                >
+                <Link href={`${base}?cauta=${encodeURIComponent(search)}&sterge=${customer.id}#confirma`} className={buttonClass.danger}>
                   Șterge datele
                 </Link>
               </li>
@@ -135,6 +136,7 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/date">, "searchP
             <li>Ștergerea nu se poate anula.</li>
           </ul>
           <ActionForm action={eraseCustomerAction}>
+            <input type="hidden" name="tenantId" value={ctx.tenantId} />
             <input type="hidden" name="customerId" value={toErase.id} />
             <label className="flex min-h-11 cursor-pointer items-center gap-3 text-lg">
               <input type="checkbox" name="confirm" required className="size-6 shrink-0 accent-accent" />
@@ -152,12 +154,12 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/date">, "searchP
         <p>
           Programările mai vechi de <strong>{retentionMonths} de luni</strong> se șterg automat, în fiecare noapte,
           împreună cu clienții care nu mai au alte programări. Perioada se schimbă din{" "}
-          <Link href="/admin/firma" className="font-semibold text-accent underline">
+          <Link href={`/superadmin/service/${ctx.tenantId}/firma`} className="font-semibold text-accent underline">
             Datele firmei
           </Link>
           .
         </p>
       </Card>
-    </AdminFrame>
+    </SuperadminFrame>
   );
 }

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
 import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
-import { ReviewPrompt } from "@/components/admin/review-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, Checkbox, Field, inputClass, PageTitle, TextArea } from "@/components/admin/ui";
 import { SERVICE_UNITS } from "@/domain/enums";
@@ -37,36 +36,21 @@ async function Content({ params }: Pick<PageProps<"/admin/servicii/[id]">, "para
   const key = (p: { vehicleTypeId: string | null; rimSizeId: string | null; rimTypeId: string | null }) =>
     `${p.vehicleTypeId ?? "-"}|${p.rimSizeId ?? "-"}|${p.rimTypeId ?? "-"}`;
   const cells = Object.fromEntries(prices.map((p) => [key(p), cellText(p)]));
-  const review = Object.fromEntries(
-    prices.filter((p) => p.needsReview).map((p) => [key(p), p.reviewNote ?? p.sourceNote ?? "De verificat"]),
-  );
   const dim = (list: { id: string; label: string; active: boolean }[]) => list.map(({ id, label, active }) => ({ id, label, active }));
 
   return (
-    <AdminFrame ctx={ctx} active="/admin/servicii">
+    <AdminFrame ctx={ctx} active="/admin/meniu">
       <Link href="/admin/servicii" className="font-semibold text-accent underline">
         ← Toate serviciile
       </Link>
       <PageTitle>{service.name}</PageTitle>
 
-      {service.needsReview && <ReviewPrompt target={{ type: "service", id: service.id }} note={service.reviewNote} />}
-
       <Card>
         <h2 className="mb-3 text-xl font-bold">Prețuri</h2>
-        {Object.keys(review).length > 0 && (
-          <div className="mb-3">
-            <ReviewPrompt
-              target={{ type: "price", id: service.id }}
-              note={`${Object.keys(review).length} prețuri de verificat (chenar galben). Dacă sunt corecte, confirmă-le.`}
-              label="Prețurile sunt corecte"
-            />
-          </div>
-        )}
         <PriceEditor
           serviceId={service.id}
           initial={{ mode: service.pricingMode, byVehicle: service.byVehicle, byRimSize: service.byRimSize, byRimType: service.byRimType }}
           cells={cells}
-          review={review}
           vehicles={dim(dimensions.vehicles)}
           sizes={dim(dimensions.sizes)}
           types={dim(dimensions.types)}
@@ -75,15 +59,6 @@ async function Content({ params }: Pick<PageProps<"/admin/servicii/[id]">, "para
 
       <Card>
         <h2 className="mb-3 text-xl font-bold">Detalii și durată</h2>
-        {service.durationNeedsReview && (
-          <div className="mb-3">
-            <ReviewPrompt
-              target={{ type: "duration", id: service.id }}
-              note={`Durata (${service.baseDurationMin ?? 0} min + ${service.perUnitDurationMin} min pe unitate) e estimată de noi.`}
-              label="Durata e corectă"
-            />
-          </div>
-        )}
         <ActionForm action={updateServiceDetailsAction}>
           <input type="hidden" name="id" value={service.id} />
           <Field label="Nume" name="name" defaultValue={service.name} required />

@@ -11,7 +11,6 @@ import {
   updateServiceDetails,
   updateServicePrices,
 } from "@/server/admin/catalog";
-import { markReviewed } from "@/server/admin/review";
 import { auditActor, requireAdmin } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
 
@@ -112,30 +111,4 @@ export async function moveServiceAction(formData: FormData): Promise<void> {
   if (!parsed.success) return;
   await withTenant(ctx.tenantId, (t) => moveService(t, auditActor(ctx), parsed.data.id, parsed.data.direction));
   refresh();
-}
-
-const reviewTargetSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("service"), id: z.uuid() }),
-  z.object({ type: z.literal("duration"), id: z.uuid() }),
-  z.object({ type: z.literal("price"), id: z.uuid() }),
-  z.object({ type: z.literal("surcharge"), id: z.uuid() }),
-  z.object({ type: z.literal("hours") }),
-  z.object({ type: z.literal("sms"), kind: z.string().max(40) }),
-  z.object({ type: z.literal("tenant"), field: z.enum(["display_name", "registered_address", "email", "retention_months", "sms_monthly_limit"]) }),
-]);
-
-/** „E corect”: valoarea de pornire e confirmată de patron. */
-export async function markReviewedAction(_previous: FormResult, formData: FormData): Promise<FormResult> {
-  const ctx = await requireAdmin();
-  let target: unknown;
-  try {
-    target = JSON.parse(String(formData.get("target") ?? ""));
-  } catch {
-    return { error: "Cerere invalidă." };
-  }
-  const parsed = reviewTargetSchema.safeParse(target);
-  if (!parsed.success) return { error: "Cerere invalidă." };
-  await withTenant(ctx.tenantId, (t) => markReviewed(t, auditActor(ctx), parsed.data));
-  refresh();
-  return { error: null, ok: true, message: "Confirmat." };
 }

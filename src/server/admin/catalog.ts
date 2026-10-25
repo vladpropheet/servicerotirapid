@@ -34,16 +34,7 @@ export async function listServicesForAdmin(t: TenantTx) {
     .from(services)
     .where(and(eq(services.tenantId, t.tenantId), isNull(services.archivedAt)))
     .orderBy(asc(services.sortOrder));
-  const reviewCells = await t.tx
-    .select({ serviceId: servicePrices.serviceId })
-    .from(servicePrices)
-    .where(and(eq(servicePrices.tenantId, t.tenantId), eq(servicePrices.needsReview, true)));
-  return categories.map((category) => ({
-    ...category,
-    services: rows
-      .filter((s) => s.categoryId === category.id)
-      .map((s) => ({ ...s, reviewCells: reviewCells.filter((c) => c.serviceId === s.id).length })),
-  }));
+  return categories.map((category) => ({ ...category, services: rows.filter((s) => s.categoryId === category.id) }));
 }
 
 export async function loadDimensions(t: TenantTx) {

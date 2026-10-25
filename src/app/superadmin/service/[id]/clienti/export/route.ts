@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { auditActor, checkAdmin } from "@/server/auth/session";
+import { checkSuperadminTenant, superadminActor } from "@/server/auth/session";
 import { exportForAdmin } from "@/server/gdpr/export";
 import { withTenant } from "@/server/tenant";
 
-// Descărcarea datelor (CSV) din pagina „Datele clienților”. Doar POST, din formularul panoului:
+// Descărcarea datelor (CSV) din pagina „Datele clienților” (super-admin). Doar POST, din formularul panoului:
 // cookie-ul de sesiune (SameSite=Lax) nu pleacă la un POST venit de pe alt site, iar Origin se verifică în plus.
 
 const kindSchema = z.enum(["programari", "clienti"]);
@@ -19,9 +19,9 @@ function fromOtherSite(request: Request): boolean {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request, { params }: RouteContext<"/superadmin/service/[id]/clienti/export">) {
   if (fromOtherSite(request)) return new Response("Cerere refuzată.", { status: 403 });
-  const access = await checkAdmin();
+  const access = await checkSuperadminTenant((await params).id);
   if (!access.ok) return new Response(null, { status: 303, headers: { Location: access.redirectTo } });
   const ctx = access.ctx;
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const kind = kindSchema.safeParse(form.get("tip"));
   if (!kind.success) return new Response("Tip de export necunoscut.", { status: 400 });
 
-  const result = await withTenant(ctx.tenantId, (t) => exportForAdmin(t, auditActor(ctx), kind.data, ctx.timeZone));
+  const result = await withTenant(ctx.tenantId, (t) => exportForAdmin(t, superadminActor(ctx), kind.data, ctx.timeZone));
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: ctx.timeZone }).format(new Date());
   return new Response(result.csv, {
     headers: {

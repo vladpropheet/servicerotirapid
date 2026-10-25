@@ -1,25 +1,28 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
+import { SuperadminFrame } from "@/components/admin/superadmin-frame";
 import { PageTitle } from "@/components/admin/ui";
 import { monthlyStats } from "@/server/admin/stats";
-import { requireAdmin } from "@/server/auth/session";
+import { requireSuperadminTenant } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
 
 export const metadata: Metadata = { title: "Statistici", robots: { index: false, follow: false } };
 
 const MONTHS = ["ian.", "feb.", "mar.", "apr.", "mai", "iun.", "iul.", "aug.", "sep.", "oct.", "nov.", "dec."];
 
-export default function StatsPage() {
+type Props = PageProps<"/superadmin/service/[id]/statistici">;
+
+export default function StatsPage(props: Props) {
   return (
-    <Suspense fallback={<AdminSkeleton />}>
-      <Content />
+    <Suspense fallback={<p className="p-4 text-lg">Se încarcă…</p>}>
+      <Content params={props.params} />
     </Suspense>
   );
 }
 
-async function Content() {
-  const ctx = await requireAdmin();
+async function Content({ params }: Pick<Props, "params">) {
+  const { id } = await params;
+  const ctx = await requireSuperadminTenant(id);
   const stats = await withTenant(ctx.tenantId, (t) => monthlyStats(t, ctx.timeZone));
   const label = (month: string) => {
     const [year, m] = month.split("-");
@@ -27,7 +30,7 @@ async function Content() {
   };
 
   return (
-    <AdminFrame ctx={ctx} active="/admin/meniu">
+    <SuperadminFrame tenantId={ctx.tenantId} tenantName={ctx.tenantName} active="statistici">
       <PageTitle>Statistici</PageTitle>
       <p>Programările din ultimele 12 luni, după luna în care au avut loc.</p>
       {stats.length === 0 ? (
@@ -61,6 +64,6 @@ async function Content() {
           </table>
         </div>
       )}
-    </AdminFrame>
+    </SuperadminFrame>
   );
 }

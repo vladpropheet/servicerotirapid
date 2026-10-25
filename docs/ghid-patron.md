@@ -20,15 +20,14 @@ Nu primești SMS-uri: programările noi apar în panou, la **Azi** și **Mâine*
 
 Rămâi logat: nu trebuie să scrii parola de fiecare dată, cât timp deschizi aplicația măcar o dată pe lună. Pe iPhone, intră o dată din iconița de pe ecran (nu din Safari).
 
-## 2. Jos pe ecran: cele 5 butoane
+## 2. Jos pe ecran: cele 4 butoane
 
 | Buton | Ce găsești |
 |---|---|
 | **Azi** | programările de azi (și **Mâine**, sus) |
-| **Calendar** | programările pe zile și pe săptămână |
+| **Calendar** | programările pe zi, pe săptămână și pe lună |
 | **Adaugă** | o programare nouă, pentru clienții care sună |
-| **Servicii** | serviciile și prețurile |
-| **Meniu** | tot restul: program, zile libere, setări, datele firmei, parola |
+| **Meniu** | tot restul: servicii și prețuri, program, zile libere, setări, jurnalul programărilor, parola |
 
 ## 3. Programările de azi și de mâine
 
@@ -58,7 +57,7 @@ Le vezi la **Blocări active**, de unde le poți și șterge.
 
 ## 6. Prețuri și servicii
 
-**Servicii** (jos) → apeși pe serviciu:
+**Meniu → Servicii și prețuri** → apeși pe serviciu:
 - schimbi **prețurile** în tabel (tip mașină × mărime jantă) → **Salvează prețurile**;
 - schimbi **durata** (cât timp ocupă lucrarea în calendar);
 - **Activ** = apare pe pagina clienților; **Programabil online** = clientul îl poate programa (altfel apare cu butonul „Sună acum”).
@@ -79,29 +78,13 @@ Suprataxele (Runflat, Off Road): **Meniu → Suprataxe**.
 - până cu câte ore înainte poate anula clientul singur, din linkul lui (acum: 1 oră);
 - câte programări active poate avea același telefon (acum: 2).
 
-## 9. „De verificat”
+## 9. Jurnal programări
 
-**Meniu → De verificat**: valorile pe care nu le-am putut confirma de pe afiș (unele prețuri, durate, program). Le corectezi sau apeși **„E corect”**. Când lista e goală, totul e confirmat.
+**Meniu → Jurnal programări**: programările noi, confirmate, anulate, finalizate și cele la care clientul nu a venit, cu data și ora.
 
-## 10. Datele firmei, logo și poza
+Datele firmei, logo-ul, poza, datele clienților (export, ștergere la cerere), istoricul modificărilor și statisticile le administrează Propheet AIgency. Pentru orice schimbare acolo, suni la Propheet AIgency.
 
-**Meniu → Datele firmei și poza**:
-- **Logo** și **Poza fațadei**: alegi imaginea și se încarcă singură;
-- datele firmei (apar jos pe pagină și în politica de confidențialitate) → **Salvează datele**;
-- **cât timp păstrăm programările**: după această perioadă se șterg automat (cerință legală).
-
-## 11. Datele clienților (cereri GDPR)
-
-**Meniu → Datele clienților**:
-- **Descarcă** programările sau clienții într-un fișier pentru Excel. Fișierul conține date personale: păstrează-l în siguranță.
-- **Șterge datele unui client** care îți cere asta: îl cauți după telefon, nume sau numărul mașinii → **Șterge datele**. Verifică întâi că e chiar clientul (de ex. te sună de pe numărul lui).
-
-## 12. Istoric și statistici
-
-- **Meniu → Istoric modificări**: cine a schimbat ce și când, cu valoarea de dinainte. Dacă ai greșit un preț, aici vezi cât era.
-- **Meniu → Statistici**: câte programări online au fost în fiecare lună.
-
-## 13. Parola și telefonul pierdut
+## 10. Parola și telefonul pierdut
 
 **Meniu → Contul meu**:
 - **Schimbă parola**: parola actuală + parola nouă de două ori → **Salvează parola**. Celelalte telefoane pe care erai logat sunt deconectate.

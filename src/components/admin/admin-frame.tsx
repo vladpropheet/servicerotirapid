@@ -6,7 +6,6 @@ const NAV = [
   { href: "/admin", label: "Azi" },
   { href: "/admin/calendar", label: "Calendar" },
   { href: "/admin/programare-noua", label: "Adaugă" },
-  { href: "/admin/servicii", label: "Servicii" },
   { href: "/admin/meniu", label: "Meniu" },
 ];
 
@@ -35,7 +34,7 @@ export function AdminFrame({ ctx, active, children }: { ctx: AdminContext; activ
         aria-label="Meniu principal"
         className="fixed inset-x-0 bottom-0 z-20 border-t border-zinc-300 bg-white pb-[env(safe-area-inset-bottom)]"
       >
-        <ul className="mx-auto grid max-w-3xl grid-cols-5">
+        <ul className="mx-auto grid max-w-3xl grid-cols-4">
           {NAV.map((item) => (
             <li key={item.href}>
               <Link

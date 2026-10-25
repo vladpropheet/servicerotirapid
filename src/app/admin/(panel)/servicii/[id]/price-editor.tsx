@@ -13,7 +13,6 @@ type Props = {
   /** Textul fiecărei celule, după cheia „vehicul|mărime|tip” (`-` = dimensiune nefolosită). */
   cells: Record<string, string>;
   /** Celulele „de verificat”, cu nota lor. */
-  review: Record<string, string>;
   vehicles: Dim[];
   sizes: Dim[];
   types: Dim[];
@@ -29,7 +28,7 @@ const MODES: { value: PricingMode; label: string }[] = [
 ];
 
 /** Editorul de prețuri: o căsuță de text pe celulă (vezi legenda). */
-export function PriceEditor({ serviceId, initial, cells: initialCells, review, vehicles, sizes, types }: Props) {
+export function PriceEditor({ serviceId, initial, cells: initialCells, vehicles, sizes, types }: Props) {
   const [mode, setMode] = useState<PricingMode>(initial.mode);
   const [byVehicle, setByVehicle] = useState(initial.byVehicle || initial.mode !== "matrix");
   const [byRimSize, setByRimSize] = useState(initial.byRimSize);
@@ -69,8 +68,7 @@ export function PriceEditor({ serviceId, initial, cells: initialCells, review, v
       aria-label={label}
       value={cells[k] ?? ""}
       onChange={(e) => setCells({ ...cells, [k]: e.target.value })}
-      title={review[k]}
-      className={`h-11 w-20 rounded border-2 px-2 text-center text-lg ${review[k] ? "border-amber-500 bg-amber-50" : "border-zinc-300 bg-white"}`}
+      className="h-11 w-20 rounded border-2 border-zinc-300 bg-white px-2 text-center text-lg"
     />
   );
 

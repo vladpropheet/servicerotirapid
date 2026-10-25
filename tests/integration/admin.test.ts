@@ -15,7 +15,6 @@ import {
 } from "@/server/admin/catalog";
 import { createClosure, deleteClosure } from "@/server/admin/closures";
 import { endSupportSession, startSupportSession } from "@/server/admin/platform";
-import { markReviewed } from "@/server/admin/review";
 import { saveWeeklyHours } from "@/server/admin/schedule";
 import { readTenantImage, saveTenantImage } from "@/server/admin/tenant-profile";
 import { createUserWithTemporaryPassword } from "@/server/auth/users";
@@ -29,7 +28,6 @@ import {
   services,
   supportSessions,
   surchargeServices,
-  tenants,
 } from "@/server/db/schema";
 import { loadBookingSettings, loadScheduleContext } from "@/server/repos/booking-data";
 import { resolveAdminTenant, resolveSupportTenant, withTenant, type TenantId } from "@/server/tenant";
@@ -302,7 +300,7 @@ describe("editorul de prețuri", () => {
   });
 });
 
-describe("program și „De verificat”", () => {
+describe("program", () => {
   it("refuză intervale suprapuse și salvează un program cu pauză de prânz", async () => {
     const overlap = await asA((t) =>
       saveWeeklyHours(t, ownerA, [
@@ -319,13 +317,6 @@ describe("program și „De verificat”", () => {
         ]),
       ),
     ).toEqual({ ok: true });
-  });
-
-  it("„E corect” scoate un câmp al firmei din lista de verificat", async () => {
-    await asA((t) => markReviewed(t, ownerA, { type: "tenant", field: "email" }));
-    const [tenant] = await ownerDb().select().from(tenants).where(eq(tenants.id, tenantA));
-    expect(tenant?.reviewFields).not.toContain("email");
-    expect(tenant?.reviewFields).toContain("registered_address");
   });
 });
 

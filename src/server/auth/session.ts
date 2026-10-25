@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { resolveAdminTenant, resolveSupportTenant, type TenantId } from "@/server/tenant";
+import { resolveAdminTenant, resolveSupportTenant, resolveTenantForSuperadmin, type TenantId } from "@/server/tenant";
 import { getAuth } from "./auth";
 
 // Cine e logat și ce are voie să facă. Se apelează în FIECARE pagină și acțiune de admin:
@@ -126,4 +126,42 @@ export async function requireSuperadmin(): Promise<SessionUser> {
 /** Pentru istoricul modificărilor: cine a făcut schimbarea. */
 export function auditActor(ctx: AdminContext): { actorUserId: string; actorKind: "owner" | "staff" | "superadmin" } {
   return { actorUserId: ctx.user.id, actorKind: ctx.role === "support" ? "superadmin" : ctx.role };
+}
+
+export type SuperadminTenantContext = {
+  user: SessionUser;
+  tenantId: TenantId;
+  tenantSlug: string;
+  tenantName: string;
+  timeZone: string;
+};
+
+/** Paginile unui service deschise din panoul super-admin (datele firmei, clienți, istoric, statistici). */
+export async function requireSuperadminTenant(tenantId: string): Promise<SuperadminTenantContext> {
+  const user = await requireSuperadmin();
+  const tenant = await resolveTenantForSuperadmin(tenantId);
+  if (!tenant) redirect("/superadmin");
+  return { user, tenantId: tenant.id, tenantSlug: tenant.slug, tenantName: tenant.displayName, timeZone: tenant.timezone };
+}
+
+/** Ca requireSuperadminTenant(), dar pentru rute API: întoarce unde trebuie trimis utilizatorul. */
+export async function checkSuperadminTenant(
+  tenantId: string,
+): Promise<{ ok: true; ctx: SuperadminTenantContext } | { ok: false; redirectTo: string }> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, redirectTo: "/admin/login" };
+  if (user.platformRole !== "superadmin" || user.mustChangePassword || !user.twoFactorEnabled) {
+    return { ok: false, redirectTo: "/superadmin" };
+  }
+  const tenant = await resolveTenantForSuperadmin(tenantId);
+  if (!tenant) return { ok: false, redirectTo: "/superadmin" };
+  return {
+    ok: true,
+    ctx: { user, tenantId: tenant.id, tenantSlug: tenant.slug, tenantName: tenant.displayName, timeZone: tenant.timezone },
+  };
+}
+
+/** Pentru istoricul modificărilor, când schimbarea o face super-adminul. */
+export function superadminActor(ctx: SuperadminTenantContext): { actorUserId: string; actorKind: "superadmin" } {
+  return { actorUserId: ctx.user.id, actorKind: "superadmin" };
 }

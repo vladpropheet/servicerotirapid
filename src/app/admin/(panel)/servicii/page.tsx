@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
 import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { buttonClass, Card, Field, inputClass, PageTitle, ReviewBadge } from "@/components/admin/ui";
+import { buttonClass, Card, Field, inputClass, PageTitle } from "@/components/admin/ui";
 import { SERVICE_UNITS } from "@/domain/enums";
 import { UNIT_LABEL } from "@/lib/labels";
 import { listServicesForAdmin } from "@/server/admin/catalog";
@@ -27,7 +27,7 @@ async function Content() {
   const categories = await withTenant(ctx.tenantId, (t) => listServicesForAdmin(t));
 
   return (
-    <AdminFrame ctx={ctx} active="/admin/servicii">
+    <AdminFrame ctx={ctx} active="/admin/meniu">
       <PageTitle>Servicii și prețuri</PageTitle>
       <p>
         Apasă pe un serviciu ca să-i schimbi numele, prețurile, durata sau dacă se programează online. Ordinea de aici
@@ -49,7 +49,6 @@ async function Content() {
                   ) : (
                     <span className="rounded bg-zinc-100 px-2">Doar la telefon</span>
                   )}
-                  {(service.needsReview || service.durationNeedsReview || service.reviewCells > 0) && <ReviewBadge />}
                 </span>
               </Link>
               <div className="flex flex-col gap-1">

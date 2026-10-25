@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { SUPERADMIN_SECTIONS } from "@/components/admin/superadmin-frame";
 import { buttonClass, Card, Field, Notice, PageTitle } from "@/components/admin/ui";
 import { formatRoPhone } from "@/lib/format";
 import { listTenantsWithOwners, SUPPORT_MINUTES } from "@/server/admin/platform";
@@ -81,6 +82,13 @@ async function Content() {
             </Link>{" "}
             · {tenant.legalName} · CUI {tenant.cui}
           </p>
+          <nav aria-label={`Pagini ${tenant.displayName}`} className="mt-2 flex flex-wrap gap-2">
+            {SUPERADMIN_SECTIONS.map((section) => (
+              <Link key={section.path} href={`/superadmin/service/${tenant.id}/${section.path}`} className={buttonClass.small}>
+                {section.label}
+              </Link>
+            ))}
+          </nav>
 
           <h3 className="mt-3 font-semibold">Conturi</h3>
           {tenant.owners.length === 0 && <p className="text-zinc-600">Niciun cont.</p>}

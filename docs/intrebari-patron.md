@@ -1,8 +1,6 @@
 # Întrebări pentru patron – Service Roți Rapid
 
-De parcurs împreună cu patronul înainte de lansare. Valorile de mai jos sunt cele **de pornire**, citite de pe afișul cu prețuri și de pe Google Maps. Unele pot fi deja schimbate în panou. După fiecare răspuns, valoarea se corectează în panou (unde scrie la „Unde se schimbă”) sau se apasă **„E corect”** la **Meniu → De verificat**.
-
-Tot ce e aici apare și în panou, la **Meniu → De verificat**, cu eticheta galbenă „De verificat”.
+De parcurs împreună cu patronul înainte de lansare. Valorile de mai jos sunt cele **de pornire**, citite de pe afișul cu prețuri și de pe Google Maps. Unele pot fi deja schimbate în panou. După fiecare răspuns, valoarea se corectează în panou (unde scrie la „Unde se schimbă”).
 
 ---
 
@@ -80,7 +78,7 @@ Unde se schimbă: **Servicii** → serviciul → „Activ”, preț, „Programa
 | 38 | **Cât timp păstrăm programările** (apoi se șterg automat, GDPR) | **11 luni** în panou (implicit era 24) | |
 | 39 | Clienții pot folosi și **numere de telefon străine**, sau doar românești (07…)? | doar românești | |
 
-Unde se schimbă: **Meniu → Datele firmei și poza** (35–38).
+Unde se schimbă: **panoul super-admin → Datele firmei și poza** (35–38), de către Propheet AIgency.
 
 ---
 

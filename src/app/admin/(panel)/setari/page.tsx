@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
 import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
-import { ReviewPrompt } from "@/components/admin/review-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, Checkbox, Field, inputClass, PageTitle } from "@/components/admin/ui";
 import type { SmsTemplateKind } from "@/domain/enums";
@@ -37,7 +36,6 @@ async function Content() {
     settings: await getSettings(t),
     templates: await getSmsTemplates(t),
   }));
-  const smsReview = templates.find((t) => t.needsReview);
 
   return (
     <AdminFrame ctx={ctx} active="/admin/meniu">
@@ -103,7 +101,6 @@ async function Content() {
             Variabile: {SMS_VARIABLES.join(" ")}. Fără diacritice, un SMS are 160 de caractere; cu diacritice doar 70
             (costă mai mult).
           </p>
-          {smsReview && <ReviewPrompt target={{ type: "sms", kind: "*" }} note={smsReview.reviewNote} label="Textele sunt bune" />}
         </>
       )}
       {FEATURES.smsNotifications && templates.map((template) => (

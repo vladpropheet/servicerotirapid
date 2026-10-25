@@ -21,6 +21,15 @@ export default function CalendarPage(props: PageProps<"/admin/calendar">) {
   );
 }
 
+const VIEWS = [
+  { key: "zi", label: "Zi" },
+  { key: "saptamana", label: "Săptămână" },
+  { key: "luna", label: "Lună" },
+] as const;
+type View = (typeof VIEWS)[number]["key"];
+
+const WEEKDAYS = ["L", "Ma", "Mi", "J", "V", "S", "D"];
+
 function parseDate(value: string | string[] | undefined, fallback: Temporal.PlainDate): Temporal.PlainDate {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return fallback;
   try {
@@ -35,26 +44,38 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/calendar">, "sea
   const query = await searchParams;
   const tz = ctx.timeZone;
   const date = parseDate(query.data, todayIn(tz));
-  const week = query.vedere === "saptamana";
+  const view: View = query.vedere === "saptamana" ? "saptamana" : query.vedere === "luna" ? "luna" : "zi";
+  const week = view === "saptamana";
+  const month = view === "luna";
 
   const monday = date.subtract({ days: date.dayOfWeek - 1 });
-  const first = week ? monday : date;
-  const last = week ? monday.add({ days: 6 }) : date;
+  const monthStart = date.with({ day: 1 });
+  const first = week ? monday : month ? monthStart : date;
+  const last = week ? monday.add({ days: 6 }) : month ? monthStart.add({ days: monthStart.daysInMonth - 1 }) : date;
   const range = { from: localDayRange(first, tz).from, to: localDayRange(last, tz).to };
   const bookings = await withTenant(ctx.tenantId, (t) => listBookings(t, range));
 
-  const step = week ? { weeks: 1 } : { days: 1 };
-  const link = (d: Temporal.PlainDate, view = week ? "saptamana" : "zi") => `/admin/calendar?data=${d.toString()}&vedere=${view}`;
+  const step = week ? { weeks: 1 } : month ? { months: 1 } : { days: 1 };
+  const link = (d: Temporal.PlainDate, to: View = view) => `/admin/calendar?data=${d.toString()}&vedere=${to}`;
+  const today = todayIn(tz);
+  const activeOn = (day: Temporal.PlainDate) => {
+    const dayRange = localDayRange(day, tz);
+    return bookings.filter((b) => b.status !== "cancelled" && b.startsAt >= dayRange.from && b.startsAt < dayRange.to).length;
+  };
 
   return (
     <AdminFrame ctx={ctx} active="/admin/calendar">
-      <div className="grid grid-cols-2 gap-2">
-        <Link href={link(date, "zi")} aria-current={!week ? "page" : undefined} className={`flex min-h-12 items-center justify-center rounded-md font-bold ${!week ? "bg-zinc-900 text-white" : "bg-white"}`}>
-          Zi
-        </Link>
-        <Link href={link(date, "saptamana")} aria-current={week ? "page" : undefined} className={`flex min-h-12 items-center justify-center rounded-md font-bold ${week ? "bg-zinc-900 text-white" : "bg-white"}`}>
-          Săptămână
-        </Link>
+      <div className="grid grid-cols-3 gap-2">
+        {VIEWS.map((v) => (
+          <Link
+            key={v.key}
+            href={link(date, v.key)}
+            aria-current={view === v.key ? "page" : undefined}
+            className={`flex min-h-12 items-center justify-center rounded-md font-bold ${view === v.key ? "bg-zinc-900 text-white" : "bg-white"}`}
+          >
+            {v.label}
+          </Link>
+        ))}
       </div>
       <div className="flex items-center justify-between gap-2">
         <Link href={link(date.subtract(step))} className={buttonClass.small} aria-label="Înapoi">
@@ -63,14 +84,16 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/calendar">, "sea
         <h1 className="text-center font-display text-2xl font-bold uppercase">
           {week
             ? `${formatDayChip(localDayRange(first, tz).from.getTime(), tz).day} – ${formatDayChip(localDayRange(last, tz).from.getTime(), tz).day}`
-            : formatLongDate(range.from.getTime(), tz)}
+            : month
+              ? new Intl.DateTimeFormat("ro-RO", { month: "long", year: "numeric", timeZone: tz }).format(range.from)
+              : formatLongDate(range.from.getTime(), tz)}
         </h1>
         <Link href={link(date.add(step))} className={buttonClass.small} aria-label="Înainte">
           →
         </Link>
       </div>
       <form action="/admin/calendar" className="flex gap-2">
-        <input type="hidden" name="vedere" value={week ? "saptamana" : "zi"} />
+        <input type="hidden" name="vedere" value={view} />
         <label htmlFor="data" className="sr-only">
           Mergi la data
         </label>
@@ -80,7 +103,38 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/calendar">, "sea
         </button>
       </form>
 
-      {week ? (
+      {month ? (
+        <div className="rounded-lg bg-white p-2">
+          <div className="grid grid-cols-7 text-center text-sm font-semibold text-zinc-600">
+            {WEEKDAYS.map((d) => (
+              <span key={d} className="py-1">
+                {d}
+              </span>
+            ))}
+          </div>
+          <ul className="grid grid-cols-7 gap-1">
+            {Array.from({ length: monthStart.dayOfWeek - 1 }, (_, i) => (
+              <li key={`gol-${i}`} aria-hidden="true" />
+            ))}
+            {Array.from({ length: monthStart.daysInMonth }, (_, i) => monthStart.add({ days: i })).map((day) => {
+              const count = activeOn(day);
+              const isToday = day.equals(today);
+              return (
+                <li key={day.toString()}>
+                  <Link
+                    href={link(day, "zi")}
+                    aria-label={`${formatLongDate(localDayRange(day, tz).from.getTime(), tz)}: ${count} ${count === 1 ? "programare" : "programări"}`}
+                    className={`flex min-h-14 flex-col items-center justify-center rounded-md border-2 ${isToday ? "border-accent" : "border-transparent"} ${count > 0 ? "bg-zinc-900 text-white" : "bg-zinc-100"}`}
+                  >
+                    <span className="font-bold">{day.day}</span>
+                    {count > 0 && <span className="text-xs">{count}</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : week ? (
         Array.from({ length: 7 }, (_, i) => monday.add({ days: i })).map((day) => {
           const dayRange = localDayRange(day, tz);
           const items = bookings.filter((b) => b.startsAt >= dayRange.from && b.startsAt < dayRange.to);

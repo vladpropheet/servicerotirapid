@@ -132,6 +132,7 @@ Mobile-first, instalabil pe ecranul telefonului (PWA). Totul în română, cu cu
 - **Istoric modificări** (audit log) cu posibilitatea de a vedea valoarea anterioară.
 - **GDPR:** export CSV al programărilor și clienților, ștergerea datelor unui client la cerere, ștergerea automată a programărilor mai vechi decât o perioadă setabilă (implicit 24 de luni, de confirmat).
 - **Statistici simple:** programări online pe lună (pentru raportul lunar).
+  - *Decizie 25.10.2026:* **datele firmei și poza, datele clienților (export, ștergere), istoricul modificărilor și statisticile se administrează doar din panoul super-admin** (`/superadmin/service/[id]/...`), nu din panoul patronului. Patronul are în schimb **„Jurnal programări”** (doar evenimentele programărilor: nouă, confirmată, anulată, finalizată, neprezentat). **„De verificat”** (pagina și etichetele galbene) a fost scos definitiv; coloanele din baza de date rămân, nefolosite. Bara de jos: Azi, Calendar (zi / săptămână / lună), Adaugă, Meniu; serviciile sunt în Meniu → „Servicii și prețuri”. „Ieși de pe toate dispozitivele” e doar în „Contul meu”.
 
 **Autentificare admin:** telefon + parolă puternică. Limitare a încercărilor (blocare temporară după mai multe încercări greșite), sesiuni sigure (cookie httpOnly, Secure, SameSite), deconectare de pe toate dispozitivele. Propune o metodă de resetare a parolei care **nu costă SMS la fiecare logare**, de exemplu resetare făcută de super-admin. Super-adminul are obligatoriu autentificare în doi pași (TOTP).
 

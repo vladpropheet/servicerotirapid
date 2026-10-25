@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
+import { SuperadminFrame } from "@/components/admin/superadmin-frame";
 import { buttonClass, PageTitle } from "@/components/admin/ui";
 import { formatLongDate, formatTime } from "@/lib/format";
 import { listAudit } from "@/server/admin/audit";
-import { requireAdmin } from "@/server/auth/session";
+import { requireSuperadminTenant } from "@/server/auth/session";
 import { withTenant } from "@/server/tenant";
 
 export const metadata: Metadata = { title: "Istoric modificări", robots: { index: false, follow: false } };
@@ -40,21 +40,24 @@ const ACTION_LABEL: Record<string, string> = {
 const ACTOR_LABEL: Record<string, string> = {
   owner: "Patron",
   staff: "Angajat",
-  superadmin: "Propheet AIgency (suport)",
+  superadmin: "Propheet AIgency",
   customer: "Client",
   system: "Sistem",
 };
 
-export default function HistoryPage(props: PageProps<"/admin/istoric">) {
+type Props = PageProps<"/superadmin/service/[id]/istoric">;
+
+export default function HistoryPage(props: Props) {
   return (
-    <Suspense fallback={<AdminSkeleton />}>
-      <Content searchParams={props.searchParams} />
+    <Suspense fallback={<p className="p-4 text-lg">Se încarcă…</p>}>
+      <Content params={props.params} searchParams={props.searchParams} />
     </Suspense>
   );
 }
 
-async function Content({ searchParams }: Pick<PageProps<"/admin/istoric">, "searchParams">) {
-  const ctx = await requireAdmin();
+async function Content({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
+  const { id } = await params;
+  const ctx = await requireSuperadminTenant(id);
   const { pagina } = await searchParams;
   const page = Math.max(1, Number(typeof pagina === "string" ? pagina : 1) || 1);
   const entries = await withTenant(ctx.tenantId, (t) => listAudit(t, { limit: PAGE_SIZE + 1, offset: (page - 1) * PAGE_SIZE }));
@@ -62,7 +65,7 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/istoric">, "sear
   const tz = ctx.timeZone;
 
   return (
-    <AdminFrame ctx={ctx} active="/admin/meniu">
+    <SuperadminFrame tenantId={ctx.tenantId} tenantName={ctx.tenantName} active="istoric">
       <PageTitle>Istoric modificări</PageTitle>
       <p>Cine a schimbat ce și când. Deschide o intrare ca să vezi valoarea de dinainte și pe cea nouă.</p>
       {entries.slice(0, PAGE_SIZE).map((entry) => (
@@ -93,18 +96,18 @@ async function Content({ searchParams }: Pick<PageProps<"/admin/istoric">, "sear
       {entries.length === 0 && <p className="rounded-lg bg-white p-4">Nicio modificare încă.</p>}
       <div className="flex justify-between">
         {page > 1 ? (
-          <Link href={`/admin/istoric?pagina=${page - 1}`} className={buttonClass.small}>
+          <Link href={`/superadmin/service/${ctx.tenantId}/istoric?pagina=${page - 1}`} className={buttonClass.small}>
             ← Mai noi
           </Link>
         ) : (
           <span />
         )}
         {hasMore && (
-          <Link href={`/admin/istoric?pagina=${page + 1}`} className={buttonClass.small}>
+          <Link href={`/superadmin/service/${ctx.tenantId}/istoric?pagina=${page + 1}`} className={buttonClass.small}>
             Mai vechi →
           </Link>
         )}
       </div>
-    </AdminFrame>
+    </SuperadminFrame>
   );
 }

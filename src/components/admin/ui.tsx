@@ -37,15 +37,6 @@ export function Notice({ kind = "info", children }: { kind?: "info" | "error" | 
   );
 }
 
-/** Eticheta galbenă „De verificat” pentru valorile neconfirmate. */
-export function ReviewBadge({ note }: { note?: string | null }) {
-  return (
-    <span title={note ?? undefined} className="inline-block rounded bg-label px-2 py-0.5 text-xs font-bold uppercase text-zinc-900">
-      De verificat
-    </span>
-  );
-}
-
 export function Field({
   label,
   name,

@@ -155,3 +155,19 @@ export async function listTenantsForMaintenance(): Promise<MaintenanceTenant[]> 
     .orderBy(asc(tenants.slug));
   return rows.map((row) => ({ ...row, id: toTenantId(row.id) }));
 }
+
+export type SuperadminTenant = { id: TenantId; slug: string; displayName: string; timezone: string };
+
+/**
+ * Service-ul deschis de super-admin din panoul lui (datele firmei, clienți, istoric, statistici).
+ * Cine apelează trebuie să fi verificat deja că utilizatorul e super-admin (requireSuperadmin).
+ */
+export async function resolveTenantForSuperadmin(id: string): Promise<SuperadminTenant | null> {
+  if (!z.uuid().safeParse(id).success) return null;
+  const [row] = await getDb()
+    .select({ id: tenants.id, slug: tenants.slug, displayName: tenants.displayName, timezone: tenants.timezone })
+    .from(tenants)
+    .where(eq(tenants.id, id))
+    .limit(1);
+  return row ? { ...row, id: toTenantId(row.id) } : null;
+}

@@ -5,7 +5,7 @@ import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
 import { buttonClass, PageTitle } from "@/components/admin/ui";
 import { FEATURES } from "@/lib/features";
 import { requireAdmin } from "@/server/auth/session";
-import { logoutAction, logoutEverywhereAction } from "../../account-actions";
+import { logoutAction } from "../../account-actions";
 
 export const metadata: Metadata = { title: "Meniu", robots: { index: false, follow: false } };
 
@@ -16,11 +16,7 @@ const LINKS = [
   { href: "/admin/suprataxe", label: "Suprataxe (Runflat, Off Road)" },
   { href: "/admin/dimensiuni", label: "Tipuri de mașini și jante" },
   { href: "/admin/setari", label: FEATURES.smsNotifications ? "Setări programări și SMS" : "Setări programări" },
-  { href: "/admin/firma", label: "Datele firmei și poza" },
-  { href: "/admin/de-verificat", label: "De verificat" },
-  { href: "/admin/date", label: "Datele clienților (export, ștergere)" },
-  { href: "/admin/istoric", label: "Istoric modificări" },
-  { href: "/admin/statistici", label: "Statistici" },
+  { href: "/admin/jurnal", label: "Jurnal programări" },
   { href: "/admin/cont", label: "Contul meu (parolă)" },
 ];
 
@@ -54,11 +50,6 @@ async function Content() {
       <form action={logoutAction}>
         <button type="submit" className={`${buttonClass.secondary} w-full`}>
           Ieși din cont
-        </button>
-      </form>
-      <form action={logoutEverywhereAction}>
-        <button type="submit" className={`${buttonClass.danger} w-full`}>
-          Ieși de pe toate dispozitivele
         </button>
       </form>
     </AdminFrame>

@@ -71,9 +71,9 @@ Stare la 25.10.2026, cu aplicația în producție la `https://programari.n8n-pro
 - [x] Politica de confidențialitate generată din datele firmei fiecărui service (operator), cu Propheet AIgency ca persoană împuternicită; pomenește protecția anti-abuz, Cloudflare Turnstile (doar când e activ), cookie-urile și durata păstrării.
 - [ ] **Jurist:** textele legale (politica de confidențialitate, textul bifei de acord) trebuie verificate de un jurist înainte de lansare. Puncte de verificat: temeiul legal (executarea serviciului vs. consimțământ), transferul de date către Cloudflare (SUA), lista persoanelor împuternicite (Propheet AIgency, OVHcloud, Cloudflare), contractul de persoană împuternicită dintre SC DANI ROCA SRL și Propheet AIgency.
 - [x] Subsol cu datele firmei pe paginile publice.
-- [x] Export CSV al programărilor și clienților (panou → Meniu → Datele clienților). Fiecare export se notează în istoric.
+- [x] Export CSV al programărilor și clienților (panoul super-admin → Datele clienților). Fiecare export se notează în istoric.
 - [x] Ștergerea datelor unui client la cerere: nume, telefon, nr. de înmatriculare și observații șterse definitiv; programările viitoare anulate; linkurile personale oprite; programările rămân anonime în statistici.
-- [x] Ștergere automată: programările mai vechi decât perioada setată (implicit 24 de luni, editabilă în „Datele firmei”) + clienții rămași fără programări + sesiuni și linkuri expirate (`npm run gdpr:retention`, se poate rula de mai multe ori).
+- [x] Ștergere automată: programările mai vechi decât perioada setată (implicit 24 de luni, editabilă în „Datele firmei”, din panoul super-admin) + clienții rămași fără programări + sesiuni și linkuri expirate (`npm run gdpr:retention`, se poate rula de mai multe ori).
 - [x] Cron-ul zilnic pe server (25.10.2026): ștergerea automată la 02:00 UTC, backup-ul la 02:30 UTC (`/etc/cron.d/servicerotirapid`, jurnal în `/var/log/servicerotirapid.log`). Rulat manual o dată, cu succes.
 - [ ] **Vlad / patron:** confirmarea perioadei de păstrare. În panou e setată acum la **11 luni** (implicit era 24); de verificat dacă e decizia patronului.
 - [ ] **Vlad / patron:** sediul social al firmei e gol în „Datele firmei”; e necesar în politica de confidențialitate.

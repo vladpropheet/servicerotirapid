@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
 import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
-import { ReviewPrompt } from "@/components/admin/review-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, Checkbox, Field, inputClass, PageTitle } from "@/components/admin/ui";
 import { cellText } from "@/domain/pricing/cell-text";
@@ -30,16 +29,11 @@ async function Content() {
   const allServices = categories.flatMap((c) => c.services);
 
   return (
-    <AdminFrame ctx={ctx} active="/admin/servicii">
+    <AdminFrame ctx={ctx} active="/admin/meniu">
       <PageTitle>Suprataxe</PageTitle>
       <p>Se adaugă la prețul serviciilor bifate mai jos (de ex. Runflat +10 lei pe roată).</p>
       {list.map((s) => (
         <Card key={s.id}>
-          {s.needsReview && (
-            <div className="mb-3">
-              <ReviewPrompt target={{ type: "surcharge", id: s.id }} note={s.reviewNote} />
-            </div>
-          )}
           <ActionForm action={updateSurchargeAction}>
             <input type="hidden" name="id" value={s.id} />
             <Field label="Nume" name="name" defaultValue={s.name} required />
