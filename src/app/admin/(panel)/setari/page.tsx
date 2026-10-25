@@ -73,11 +73,17 @@ async function Content() {
               <option value="manual">Manuală (le confirm eu din „Azi”)</option>
             </select>
           </label>
-          <Checkbox
-            label="Programările adăugate de mine (telefonice) ocupă și ele locul online"
-            name="manualBookingsUseCapacity"
-            defaultChecked={settings.manualBookingsUseCapacity}
-          />
+          <div>
+            <Checkbox
+              label="Programările adăugate de mine (telefonice) ocupă și ele locul online"
+              name="manualBookingsUseCapacity"
+              defaultChecked={settings.manualBookingsUseCapacity}
+            />
+            <p className="text-sm text-zinc-600">
+              Nebifat: o programare adăugată de tine nu blochează ora pentru clienții online. Bifat: ora respectivă nu
+              mai poate fi luată online.
+            </p>
+          </div>
           {FEATURES.smsNotifications && (
             <>
               <Checkbox label="Trimite SMS de reamintire" name="reminderEnabled" defaultChecked={settings.reminderHoursBefore !== null} />
