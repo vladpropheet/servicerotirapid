@@ -93,7 +93,7 @@ Stare la 25.10.2026, cu aplicația în producție la `https://programari.n8n-pro
 - [x] HTTPS prin Let's Encrypt (Caddy), HSTS activ, `http://` trimite la `https://`.
 - [x] Migrările rulează controlat la fiecare deploy, în containerul `ops`, înainte de pornirea aplicației; doar adaugă, fiecare în tranzacție.
 - [x] Backup criptat zilnic (pg_dump + age) pentru baza de date și pozele încărcate; pe server doar cheia publică, cheia privată doar în managerul de parole al lui Vlad. **Test de restaurare reușit pe server (25.10.2026)**, notat în `docs/productie.md`.
-- [ ] **Vlad:** copia backup-ului **în afara serverului** (stocare S3 într-o regiune din UE, de ex. OVH Object Storage, cost estimat sub 0,10 €/lună; ghid în `docs/productie.md`). Până atunci, backup-ul există doar pe același server: dacă serverul e pierdut, se pierd și copiile.
+- [x] Copia backup-ului **în afara serverului** (25.10.2026): OVH Object Storage, regiunea Varșovia (UE), containerul `programariservicerotirapid`, acces doar cu cheia unui utilizator dedicat. Proba: backup-ul a ajuns în container. Copiile mai vechi de 30 de zile se șterg automat.
 - [ ] **Vlad / patron:** test de restaurare **lunar** (`restore-test.sh`), notat în jurnalul din `docs/productie.md`.
 - [x] Monitorizare: `/api/health` (fără informații sensibile) + healthcheck-urile containerelor (`docker compose ps`).
 
