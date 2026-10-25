@@ -289,6 +289,7 @@ Testat pe calculatorul de dezvoltare (22.10.2026): o modificare făcută după b
 | Data | Backup testat | Rezultat (service-uri / programări / clienți) | Cine |
 |---|---|---|---|
 | 22.10.2026 | backup de test, pe PC (Docker) | REUȘIT (1 / 1 / 1) | Claude, la construirea Fazei 7 |
+| 25.10.2026 | primul backup de pe server (VPS OVH), cu cheia din managerul de parole | REUȘIT (1 / 0 / 0) | Vlad |
 | | | | |
 
 ### De discutat separat (nu ține de aplicație)
