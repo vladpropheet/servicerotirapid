@@ -189,6 +189,15 @@ sh docker/server/deploy.sh
    curl.exe -s https://rotirapid.n8n-propheetai.xyz/api/health
    ```
    **Rezultat corect:** `{"status":"ok"}` (prima cerere poate dura câteva secunde: Caddy cere certificatul). Verifică și că n8n merge în continuare la adresa lui.
+5. **Dacă Caddy nu „vede” blocul nou** (așa s-a întâmplat pe 24.10.2026): `docker exec n8n-docker-caddy-1 tail -7 /etc/caddy/Caddyfile` nu arată blocul, deși e în fișierul de pe server. Cauza: containerul e legat de o versiune veche a fișierului. Verifici întâi că singura diferență e blocul nou:
+   ```
+   docker exec n8n-docker-caddy-1 cat /etc/caddy/Caddyfile | sudo diff - /opt/n8n-docker/caddy_config/Caddyfile.inainte-de-programari && echo IDENTIC
+   ```
+   Doar dacă afișează `IDENTIC`, recreezi containerul Caddy (n8n e inaccesibil câteva secunde):
+   ```
+   cd /opt/n8n-docker && docker compose up -d --force-recreate --no-deps caddy
+   ```
+   > **Atenție:** în `/opt/n8n-docker` nu rula niciodată `--remove-orphans`. Docker afișează un avertisment despre `task-runners` și `cal-webhook-gateway`, iar opțiunea aceea le-ar șterge (automatizările s-ar opri).
 
 ### B7. Datele de pornire și conturile
 
@@ -234,7 +243,7 @@ sh docker/server/deploy.sh
    ```
    **Ce face:** în fiecare noapte rulează ștergerea datelor vechi (02:00 UTC) și backup-ul (02:30 UTC).
    **Verificare a doua zi:** `sudo tail -n 5 /var/log/servicerotirapid.log` arată `Ștergere automată gata...` și `Backup local: ...`.
-5. **Copia în afara serverului (când alegi furnizorul):** în contul furnizorului (OVH Object Storage sau altul compatibil S3, regiune din UE) creezi un **bucket** privat și o **cheie de acces** doar pentru el. Completezi în `.env` liniile `BACKUP_S3_*`, rulezi din nou comanda `docker compose ... up -d` de la punctul 1 și `docker exec servicerotirapid-ops-1 backup.sh`.
+5. **Copia în afara serverului (când alegi furnizorul):** ghid separat, pas cu pas, în [backup-extern.md](backup-extern.md) (OVH Object Storage, cost estimat sub 0,10 €/lună).
    **Rezultat corect:** `Copie în afara serverului: gata (...)`. Copiile mai vechi de 30 de zile se șterg singure.
 
 ### B9. Cloudflare Turnstile (anti-spam, gratuit)
@@ -294,3 +303,23 @@ Testat pe calculatorul de dezvoltare (22.10.2026): o modificare făcută după b
 
 ### De discutat separat (nu ține de aplicație)
 - **Evolution API** e publicat direct pe portul 8080 (IPv4 și IPv6), fără HTTPS. Porturile publicate de Docker ocolesc `ufw`, deci regula din firewall nu-l poate închide. Variantă: îl pui în spatele lui Caddy (cu HTTPS) și îl legi doar la `127.0.0.1`.
+
+---
+
+## Partea D – documente pentru predare
+
+- [ghid-patron.md](ghid-patron.md): cum folosește patronul panoul (de dat la predare).
+- [intrebari-patron.md](intrebari-patron.md): valorile „de verificat” (prețuri, durate, program), de parcurs cu patronul.
+- [backup-extern.md](backup-extern.md): copia backup-ului în afara serverului.
+- [evolution-api.md](evolution-api.md): portul 8080 deschis de Evolution API (nu ține de aplicație).
+- [securitate.md](securitate.md): lista de verificare a securității, cu ce e făcut și ce rămâne.
+
+### Predarea către patron
+1. Parola temporară nouă pentru contul lui (din PowerShell pe PC):
+   ```
+   ssh vps "docker exec servicerotirapid-ops-1 reset-password.sh --telefon '0766 777 130'"
+   ```
+   I-o dai personal. Parola ta de test nu mai merge din acest moment.
+2. El intră pe telefonul lui, își alege parola și instalează aplicația (ghid-patron.md, §1).
+3. Îi arăți **Azi**, **Adaugă**, **Zile libere și ore blocate** și **Contul meu**.
+

@@ -1,6 +1,8 @@
 # Lista de verificare a securității și GDPR
 
-Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` = făcut și verificat prin teste; `[ ]` = rămâne de făcut (cu faza sau persoana responsabilă).
+Stare la 25.10.2026, cu aplicația în producție la `https://rotirapid.n8n-propheetai.xyz`. `[x]` = făcut și verificat (prin teste automate sau direct pe server); `[ ]` = rămâne de făcut (cu persoana responsabilă).
+
+**Verificat din exterior, pe server (25.10.2026):** porturile 5432 (baza de date) și 3000 (aplicația) sunt închise; HTTPS, HSTS, CSP și `X-Frame-Options: DENY` sunt active; singurul port deschis în plus față de 22/80/443 este 8080 (Evolution API, nu ține de aplicație, vezi §11).
 
 ## 1. Secrete
 
@@ -33,7 +35,7 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 - [x] IP-ul și telefonul nu se salvează în clar: doar un HMAC (cu cheie secretă), păstrat cel mult 2 zile.
 - [x] IP-ul se citește doar din `X-Real-Ip` (pus de proxy). `X-Forwarded-For` poate fi falsificat, deci nu se folosește.
 - [x] Cloudflare Turnstile (gratuit): verificat pe server; testat cu cheile de test oficiale Cloudflare (programare reușită, fără blocări CSP). Oprit în dezvoltare fără chei; în producție serverul nu pornește fără chei, decât cu `TURNSTILE_DISABLED=1`.
-- [ ] **Vlad, înainte de lansare:** cont Cloudflare gratuit → Turnstile → widget pentru subdomeniul aplicației → cheile în `.env` pe server.
+- [x] Cloudflare Turnstile activ în producție (25.10.2026): widget pentru `rotirapid.n8n-propheetai.xyz`, cheile în `.env` pe server; politica de confidențialitate pomenește Cloudflare.
 - [x] Caddy (proxy-ul de pe VPS) suprascrie `X-Real-IP` cu IP-ul real (`header_up X-Real-IP {remote_host}` în `docker/server/Caddyfile.snippet`). Verificat local cu Caddy 2.11: un `X-Real-Ip` / `X-Forwarded-For` falsificat de vizitator e înlocuit.
 
 ## 5. Header-e de securitate (verificate cu `curl` și în testele Playwright)
@@ -49,17 +51,19 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 
 ## 5b. Fișiere încărcate (poza fațadei, logo)
 
-- [x] Tipul verificat după conținut, maxim 5 MB, decodate și re-salvate ca WebP pe server (un fișier care doar se dă drept imagine e refuzat). Metadatele (inclusiv locația GPS din pozele făcute cu telefonul) se șterg. Numele fișierului îl alege serverul.
+- [x] Tipul verificat după conținut, maxim 5 MB, se încarcă imediat ce e ales fișierul, decodate și re-salvate ca WebP pe server (un fișier care doar se dă drept imagine e refuzat). Metadatele (inclusiv locația GPS din pozele făcute cu telefonul) se șterg. Numele fișierului îl alege serverul.
 
 ## 6. Linkurile „vezi / anulează programarea”
 
 - [x] Token semnat (HMAC-SHA256), 22 de caractere, fără ID-uri ghicibile. În baza de date stă doar hash-ul. Expiră la 7 zile după programare. Se poate revoca.
 - [x] Deschiderea linkului nu anulează nimic (aplicațiile de mesagerie deschid singure linkurile); anularea cere apăsarea butonului.
+- [x] Fără SMS, linkul se afișează pe ecranul de confirmare, cu butoanele „Copiază linkul” și „Trimite-l”, ca clientul să-l păstreze.
 
 ## 7. Loguri
 
 - [x] Logurile aplicației nu conțin nume, telefoane sau IP-uri: doar tipul erorii.
 - [x] Better Auth: doar erori, fără detaliile atașate, cu numerele lungi mascate. Telemetria e oprită.
+- [x] Erorile de bază de date (care conțin interogarea și valorile, deci nume și telefoane) apar în log doar cu codul și constrângerea (`src/server/security/redact-logs.ts`), testat.
 - [x] Scriptul de ștergere automată scrie doar numere (câte rânduri s-au șters).
 
 ## 8. GDPR
@@ -70,29 +74,36 @@ Stare la finalul Fazei 7 (22.10.2026), înainte de instalarea pe server. `[x]` =
 - [x] Export CSV al programărilor și clienților (panou → Meniu → Datele clienților). Fiecare export se notează în istoric.
 - [x] Ștergerea datelor unui client la cerere: nume, telefon, nr. de înmatriculare și observații șterse definitiv; programările viitoare anulate; linkurile personale oprite; programările rămân anonime în statistici.
 - [x] Ștergere automată: programările mai vechi decât perioada setată (implicit 24 de luni, editabilă în „Datele firmei”) + clienții rămași fără programări + sesiuni și linkuri expirate (`npm run gdpr:retention`, se poate rula de mai multe ori).
-- [ ] **Pe server:** cron-ul zilnic `retention.sh` (`docker/server/cron`, `docs/productie.md`). Până atunci, pagina din panou promite o ștergere care nu rulează încă singură.
-- [ ] **Vlad / patron:** confirmarea perioadei de păstrare (24 de luni).
+- [x] Cron-ul zilnic pe server (25.10.2026): ștergerea automată la 02:00 UTC, backup-ul la 02:30 UTC (`/etc/cron.d/servicerotirapid`, jurnal în `/var/log/servicerotirapid.log`). Rulat manual o dată, cu succes.
+- [ ] **Vlad / patron:** confirmarea perioadei de păstrare. În panou e setată acum la **11 luni** (implicit era 24); de verificat dacă e decizia patronului.
+- [ ] **Vlad / patron:** sediul social al firmei e gol în „Datele firmei”; e necesar în politica de confidențialitate.
 - [x] Fără marketing și fără SMS (decizia din 22.10.2026): nu se colectează acord de marketing.
 
-## 9. Dependențe (`npm audit`, 22.10.2026)
+## 9. Dependențe (`npm audit`, 25.10.2026)
 
 - [x] Dependențe puține, versiuni fixate exact în `package.json`.
 - Rămase, fără impact în producție:
   - `esbuild` ≤ 0.24.2 (moderat), prin `drizzle-kit`: afectează doar serverul de dezvoltare al esbuild, pe care nu-l folosim. `drizzle-kit` e unealta de migrări; nu rulează în aplicație.
-  - `braces` (ridicat), prin `eslint-config-next`: doar în verificarea codului (lint), pe tiparele noastre de fișiere. Nu există încă o versiune reparată.
 - [x] Imaginile Docker de producție nu includ uneltele de dezvoltare: `app` conține doar serverul Next.js și dependențele lui (ieșire „standalone”), `ops` doar scripturile împachetate + modulul argon2. `drizzle-kit` și `eslint` nu ajung pe server.
 - [x] Containerele rulează cu utilizatorul `node` (fără drepturi de administrator); codul aplicației aparține lui root și nu poate fi modificat de aplicație.
 
-## 10. Producție și backup (Faza 7)
+## 10. Producție și backup
 
-Codul și ghidul sunt gata; pașii de pe server îi faci tu după [productie.md](productie.md).
-
-- [x] `Dockerfile` multi-stage, utilizator non-root, healthcheck; `docker-compose.prod.yml` pentru VPS (lângă n8n, în spatele lui Caddy). Testat local cap-coadă: build, migrări, seed, cont patron, programare cu Turnstile (chei de test), logare, încărcarea pozei, header-e.
+- [x] Aplicația rulează pe VPS-ul OVH din Varșovia (UE), lângă n8n, în spatele Caddy-ului existent (decizia din 23.10.2026, fără Coolify). `db` și `ops` sunt într-o rețea Docker proprie; doar `app` e vizibilă pentru Caddy.
+- [x] HTTPS prin Let's Encrypt (Caddy), HSTS activ, `http://` trimite la `https://`.
 - [x] Migrările rulează controlat la fiecare deploy, în containerul `ops`, înainte de pornirea aplicației; doar adaugă, fiecare în tranzacție.
-- [x] Backup criptat (pg_dump + age; pe server doar cheia publică, cheia privată doar la tine) pentru baza de date și pozele încărcate; 7 zile local, 30 de zile în afara serverului (orice stocare S3). Testat local: backup, test de restaurare, restaurare reală, copie S3 (server S3 de test), refuzul backup-ului fără cheie și al cheii greșite.
-- [ ] **Pe server (Vlad):** securizarea VPS-ului, primul deploy, cron-ul și primul test de restaurare pe server (`docs/productie.md`).
-- [x] Decizia pentru n8n: aplicația stă alături, fără Coolify (23.10.2026); db și ops sunt într-o rețea Docker proprie, doar `app` e vizibilă pentru Caddy.
-- [ ] **Vlad:** alegerea stocării externe pentru backup. Până atunci, backup-ul există doar pe același server.
-- [ ] HTTPS prin Let's Encrypt: automat în Caddy după adăugarea domeniului. HSTS e deja activ în producție.
-- [ ] Datele doar în UE: VPS-ul și stocarea externă într-o regiune din UE (B0, B7).
+- [x] Backup criptat zilnic (pg_dump + age) pentru baza de date și pozele încărcate; pe server doar cheia publică, cheia privată doar în managerul de parole al lui Vlad. **Test de restaurare reușit pe server (25.10.2026)**, notat în `docs/productie.md`.
+- [ ] **Vlad:** copia backup-ului **în afara serverului** (stocare S3 într-o regiune din UE, de ex. OVH Object Storage, cost estimat sub 0,10 €/lună; ghid în `docs/productie.md`). Până atunci, backup-ul există doar pe același server: dacă serverul e pierdut, se pierd și copiile.
+- [ ] **Vlad / patron:** test de restaurare **lunar** (`restore-test.sh`), notat în jurnalul din `docs/productie.md`.
 - [x] Monitorizare: `/api/health` (fără informații sensibile) + healthcheck-urile containerelor (`docker compose ps`).
+
+## 11. Serverul (VPS)
+
+- [x] Logare SSH doar cu cheie (`PasswordAuthentication no`), `root` nu se poate loga (`PermitRootLogin no`). Verificat: logarea cu parolă e refuzată.
+- [x] fail2ban activ pe SSH (la verificare blocase deja 27 de IP-uri care încercau parole).
+- [x] Actualizări automate de securitate (`unattended-upgrades`) pornite.
+- [x] Firewall `ufw` activ: 22, 80, 443 (+ 8080, vezi mai jos).
+- [x] Utilizatorul `ubuntu` (non-root, cu `sudo`); parola lui și cheia SSH sunt în managerul de parole, pentru consola KVM din panoul OVH în caz de urgență.
+- [ ] **Vlad:** actualizările în așteptare + repornirea serverului (n8n se oprește cam un minut).
+- [ ] **Vlad (nu ține de aplicație):** Evolution API e publicat direct pe portul 8080, fără HTTPS, iar Docker ocolește `ufw`. Ghid în `docs/evolution-api.md`.
+- [ ] **Vlad:** verificarea în doi pași pe conturile de care depinde totul: OVH, GitHub, Namecheap, Cloudflare.

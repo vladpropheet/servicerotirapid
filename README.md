@@ -74,6 +74,7 @@ Toate comenzile se rulează în PowerShell, în folderul proiectului.
 ## Producție
 
 - Ghidul pas cu pas (VPS OVH lângă n8n, Caddy, backup, restaurare): [docs/productie.md](docs/productie.md).
+- Pentru predare: [ghidul patronului](docs/ghid-patron.md) și [întrebările pentru patron](docs/intrebari-patron.md). Securitate: [docs/securitate.md](docs/securitate.md).
 - `docker-compose.prod.yml` (pe VPS, în spatele Caddy-ului existent): `db` (PostgreSQL, fără port public), `ops` (migrări la fiecare deploy, backup criptat, ștergere automată) și `app` (aplicația).
 - `Dockerfile`: imaginile `app` și `ops`, cu utilizator fără drepturi de administrator.
 - `docker/server/`: generarea `.env` de producție, deploy, cron, blocul pentru Caddy.
