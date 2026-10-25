@@ -224,12 +224,10 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
 
   return (
     <div className="pb-8">
-      <StepIndicator step={step} />
-
       {step === 1 && (
         <section aria-labelledby="pas-1" className="flex flex-col gap-6">
           <h1 id="pas-1" className="font-display text-3xl font-bold uppercase">
-            Alege serviciul
+            <span className="sr-only">Pasul 1 din 3: </span>Alege serviciul dorit:
           </h1>
 
           <fieldset className="flex flex-col gap-2">
@@ -406,7 +404,7 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
       {step === 2 && (
         <section aria-labelledby="pas-2" className="flex flex-col gap-5">
           <h1 id="pas-2" className="font-display text-3xl font-bold uppercase">
-            Alege ziua și ora
+            <span className="sr-only">Pasul 2 din 3: </span>Alege ziua și ora
           </h1>
           <Summary onEdit={() => goTo(1)}>
             {chosenNames}
@@ -510,7 +508,7 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
       {step === 3 && slot && (
         <section aria-labelledby="pas-3" className="flex flex-col gap-5">
           <h1 id="pas-3" className="font-display text-3xl font-bold uppercase">
-            Datele tale
+            <span className="sr-only">Pasul 3 din 3: </span>Datele tale
           </h1>
           <Summary onEdit={() => goTo(2)}>
             <strong>
@@ -628,28 +626,6 @@ export function BookingWizard({ slug, timeZone, publicPhone, slotStepMin, pricin
         </section>
       )}
     </div>
-  );
-}
-
-function StepIndicator({ step }: { step: Step }) {
-  const steps = ["Serviciul", "Ziua și ora", "Datele tale"];
-  return (
-    <ol className="mb-6 flex gap-2 text-sm font-semibold" aria-label="Pașii programării">
-      {steps.map((name, index) => {
-        const number = (index + 1) as Step;
-        return (
-          <li
-            key={name}
-            aria-current={number === step ? "step" : undefined}
-            className={`flex-1 rounded-md px-2 py-2 text-center ${
-              number === step ? "bg-zinc-900 text-white" : number < step ? "bg-zinc-300" : "bg-white text-zinc-600"
-            }`}
-          >
-            {number}. {name}
-          </li>
-        );
-      })}
-    </ol>
   );
 }
 

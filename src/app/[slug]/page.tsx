@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { MapsLink } from "@/components/maps-link";
 import { SiteFooter } from "@/components/site-footer";
 import { formatRoPhone, telHref } from "@/lib/format";
 import { loadBookingSettings, loadCatalog, loadTenantInfo } from "@/server/repos/booking-data";
@@ -37,46 +38,28 @@ async function TenantContent({ params }: { params: PageProps<"/[slug]">["params"
 
   return (
     <>
-      {info.facadeMediaId && (
-        // eslint-disable-next-line @next/next/no-img-element -- poza încărcată de patron, servită de aplicație
-        <img
-          src={`/${info.slug}/fatada?v=${info.facadeMediaId}`}
-          alt={`Fațada ${info.displayName}`}
-          className="h-44 w-full object-cover sm:h-64"
-        />
-      )}
-      {info.logoMediaId && (
-        <div className="bg-white px-4 py-3">
-          {/* eslint-disable-next-line @next/next/no-img-element -- logo încărcat de patron, servit de aplicație */}
-          <img
-            src={`/${info.slug}/logo?v=${info.logoMediaId}`}
-            alt={info.displayName}
-            className="mx-auto max-h-28 w-auto max-w-full sm:max-h-36"
-          />
-        </div>
-      )}
-      <header className="bg-zinc-900 px-4 pb-6 pt-8 text-white">
-        <div className="mx-auto max-w-2xl">
+      <header className="bg-white px-4 pb-5 pt-3 shadow-sm">
+        <div className="mx-auto flex max-w-2xl flex-col gap-3">
+          <MapsLink address={info.workAddress} />
           {/* Logo-ul îl încarcă patronul din admin („Datele firmei”). Fără logo, numele apare ca logo text (CLAUDE.md §5). */}
-          <p
-            className={
-              info.logoMediaId ? "sr-only" : "font-display text-4xl font-bold uppercase leading-none tracking-tight"
-            }
-          >
-            {info.displayName}
-          </p>
-          <p className={info.logoMediaId ? "text-zinc-300" : "mt-2 text-zinc-300"}>{info.workAddress}</p>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span className="rounded bg-label px-2 py-1 text-sm font-bold uppercase text-zinc-900">
-              Programare online
-            </span>
-            <a
-              href={telHref(info.publicPhone)}
-              className="inline-flex min-h-11 items-center rounded-md border border-white/40 px-4 font-semibold"
-            >
-              Sună: {formatRoPhone(info.publicPhone)}
-            </a>
-          </div>
+          {info.logoMediaId ? (
+            <div className="relative mx-auto w-fit max-w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element -- logo încărcat de patron, servit de aplicație */}
+              <img
+                src={`/${info.slug}/logo?v=${info.logoMediaId}`}
+                alt={info.displayName}
+                className="max-h-32 w-auto max-w-full sm:max-h-40"
+              />
+              <OnlineBadge className="absolute bottom-0 right-0" />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-center">
+              <p className="font-display text-4xl font-bold uppercase leading-none tracking-tight text-zinc-900">
+                {info.displayName}
+              </p>
+              <OnlineBadge />
+            </div>
+          )}
         </div>
       </header>
 
@@ -102,15 +85,28 @@ async function TenantContent({ params }: { params: PageProps<"/[slug]">["params"
         )}
       </main>
 
-      <SiteFooter tenant={info} belowBottomBar={settings.onlineCapacity > 0} />
+      <SiteFooter
+        tenant={info}
+        belowBottomBar={settings.onlineCapacity > 0}
+        backgroundImage={info.facadeMediaId ? `/${info.slug}/fatada?v=${info.facadeMediaId}` : null}
+      />
     </>
+  );
+}
+
+/** Eticheta galbenă „Programează-te online”, în colțul de jos-dreapta al logo-ului. */
+function OnlineBadge({ className = "" }: { className?: string }) {
+  return (
+    <span className={`whitespace-nowrap rounded bg-label px-2 py-1 text-sm font-bold uppercase text-zinc-900 shadow ${className}`}>
+      Programează-te online
+    </span>
   );
 }
 
 function PageSkeleton() {
   return (
     <div aria-busy="true" className="flex-1">
-      <div className="h-36 bg-zinc-900" />
+      <div className="h-48 bg-white" />
       <p className="mx-auto max-w-2xl px-4 py-6 text-lg">Se încarcă…</p>
     </div>
   );

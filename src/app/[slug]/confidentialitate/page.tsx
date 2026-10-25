@@ -115,7 +115,7 @@ async function PrivacyContent({ params }: { params: PageProps<"/[slug]/confident
           </Link>
         </p>
       </main>
-      <SiteFooter tenant={info} />
+      <SiteFooter tenant={info} backgroundImage={info.facadeMediaId ? `/${info.slug}/fatada?v=${info.facadeMediaId}` : null} />
     </>
   );
 }

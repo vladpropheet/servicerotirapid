@@ -13,8 +13,18 @@ test("clientul face o programare în 3 pași și o anulează din link", async ({
   });
 
   await page.goto("/roti-rapid");
-  await expect(page.getByRole("heading", { name: "Alege serviciul" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Alege serviciul dorit:" })).toBeVisible();
   await expect(page.getByText("Service Roți Rapid", { exact: true })).toBeVisible();
+  await expect(page.getByText("Programează-te online", { exact: true })).toBeVisible();
+  // Antetul: fără telefon și fără casetele cu pașii; adresa deschide aplicațiile de hărți.
+  await expect(page.getByRole("link", { name: /^Sună:/ })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Pașii programării" })).toHaveCount(0);
+  await page.getByText("Bulevardul Petrochimiștilor 1A, 110167 Pitești, Argeș").first().click();
+  await expect(page.getByRole("link", { name: "Waze" })).toHaveAttribute("href", /^https:\/\/waze\.com\/ul\?q=Bulevardul/);
+  await expect(page.getByRole("link", { name: "Google Maps" })).toHaveAttribute(
+    "href",
+    /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=Bulevardul/,
+  );
 
   // Pasul 1: autoturism, mărimea „nu știu” (implicit), jantă aliaj, 4 roți, pachet complet.
   await page.getByText("Autoturism", { exact: true }).click();
