@@ -1,5 +1,9 @@
 # Evolution API pe portul 8080 (nu ține de aplicația de programări)
 
+> **Stare 25.10.2026:** Vlad nu folosește momentan Evolution API, așa că l-am **oprit** (`docker update --restart=no evolution_api && docker stop evolution_api`) și am scos regula 8080 din `ufw`. Datele lui (legătura WhatsApp, configurația din `/home/ubuntu/evolution`) au rămas pe server. Verificat: portul 8080 e închis din exterior.
+>
+> **Când va fi nevoie din nou:** nu-l porni din nou pe portul 8080 deschis. Îl repornim securizat, cu varianta B de mai jos: subdomeniu (de ex. `evolution.n8n-propheetai.xyz`) + HTTPS prin Caddy (e deja în rețeaua lui Caddy, cu numele `evolution_api`). În n8n, adresa `http://51.83.185.231:8080` (folosită în nodurile HTTP Request) devine adresa nouă, iar în `docker-compose.yml` portul 8080 nu se mai publică.
+
 **Ce am observat (23–25.10.2026):** containerul `evolution_api` e publicat direct pe internet, la `51.83.185.231:8080` (IPv4 și IPv6), **fără HTTPS**.
 - Cine cunoaște adresa poate încerca să acceseze API-ul (protejat doar de cheia lui API), iar traficul, inclusiv cheia, circulă **necriptat**.
 - Firewall-ul `ufw` nu îl poate opri: porturile publicate de Docker ocolesc `ufw`.

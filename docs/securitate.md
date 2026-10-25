@@ -2,7 +2,7 @@
 
 Stare la 25.10.2026, cu aplicația în producție la `https://rotirapid.n8n-propheetai.xyz`. `[x]` = făcut și verificat (prin teste automate sau direct pe server); `[ ]` = rămâne de făcut (cu persoana responsabilă).
 
-**Verificat din exterior, pe server (25.10.2026):** porturile 5432 (baza de date) și 3000 (aplicația) sunt închise; HTTPS, HSTS, CSP și `X-Frame-Options: DENY` sunt active; singurul port deschis în plus față de 22/80/443 este 8080 (Evolution API, nu ține de aplicație, vezi §11).
+**Verificat din exterior, pe server (25.10.2026):** porturile 5432 (baza de date) și 3000 (aplicația) sunt închise; HTTPS, HSTS, CSP și `X-Frame-Options: DENY` sunt active; după oprirea Evolution API, sunt deschise doar 22, 80 și 443.
 
 ## 1. Secrete
 
@@ -102,8 +102,8 @@ Stare la 25.10.2026, cu aplicația în producție la `https://rotirapid.n8n-prop
 - [x] Logare SSH doar cu cheie (`PasswordAuthentication no`), `root` nu se poate loga (`PermitRootLogin no`). Verificat: logarea cu parolă e refuzată.
 - [x] fail2ban activ pe SSH (la verificare blocase deja 27 de IP-uri care încercau parole).
 - [x] Actualizări automate de securitate (`unattended-upgrades`) pornite.
-- [x] Firewall `ufw` activ: 22, 80, 443 (+ 8080, vezi mai jos).
+- [x] Firewall `ufw` activ: doar 22, 80, 443.
 - [x] Utilizatorul `ubuntu` (non-root, cu `sudo`); parola lui și cheia SSH sunt în managerul de parole, pentru consola KVM din panoul OVH în caz de urgență.
 - [x] Actualizările de sistem instalate și serverul repornit (25.10.2026); toate containerele (n8n, Evolution API, aplicația) au pornit singure.
-- [ ] **Vlad (nu ține de aplicație):** Evolution API e publicat direct pe portul 8080, fără HTTPS, iar Docker ocolește `ufw`. Ghid în `docs/evolution-api.md`.
+- [x] Evolution API (nefolosit momentan) oprit pe 25.10.2026, fără repornire automată; regula 8080 scoasă din `ufw`. Verificat din exterior: portul 8080 e închis. La nevoie se repornește securizat (subdomeniu + HTTPS), vezi `docs/evolution-api.md`.
 - [ ] **Vlad:** verificarea în doi pași pe conturile de care depinde totul: OVH, GitHub, Namecheap, Cloudflare.
