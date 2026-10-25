@@ -104,6 +104,6 @@ Stare la 25.10.2026, cu aplicația în producție la `https://rotirapid.n8n-prop
 - [x] Actualizări automate de securitate (`unattended-upgrades`) pornite.
 - [x] Firewall `ufw` activ: 22, 80, 443 (+ 8080, vezi mai jos).
 - [x] Utilizatorul `ubuntu` (non-root, cu `sudo`); parola lui și cheia SSH sunt în managerul de parole, pentru consola KVM din panoul OVH în caz de urgență.
-- [ ] **Vlad:** actualizările în așteptare + repornirea serverului (n8n se oprește cam un minut).
+- [x] Actualizările de sistem instalate și serverul repornit (25.10.2026); toate containerele (n8n, Evolution API, aplicația) au pornit singure.
 - [ ] **Vlad (nu ține de aplicație):** Evolution API e publicat direct pe portul 8080, fără HTTPS, iar Docker ocolește `ufw`. Ghid în `docs/evolution-api.md`.
 - [ ] **Vlad:** verificarea în doi pași pe conturile de care depinde totul: OVH, GitHub, Namecheap, Cloudflare.
