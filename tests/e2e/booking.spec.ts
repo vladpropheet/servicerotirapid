@@ -104,6 +104,16 @@ test("serviciile care nu se programează online au „Sună acum”", async ({ p
   await expect(snur.getByRole("link", { name: "Sună acum" })).toHaveAttribute("href", "tel:+40766777130");
 });
 
+test("linkul trimis pe WhatsApp sau Facebook are pictograma aplicației în previzualizare", async ({ request, baseURL }) => {
+  for (const userAgent of ["WhatsApp/2.23.20.0 A", "facebookexternalhit/1.1"]) {
+    const html = await (await request.get("/roti-rapid", { headers: { "User-Agent": userAgent } })).text();
+    const head = html.slice(0, html.indexOf("</head>"));
+    expect(head, userAgent).toContain(`<meta property="og:image" content="${baseURL}/icons/icon-512.png"/>`);
+  }
+  const icon = await request.get("/icons/icon-512.png");
+  expect(icon.headers()["content-type"]).toBe("image/png");
+});
+
 test("politica de confidențialitate e generată din datele firmei", async ({ page }) => {
   await page.goto("/roti-rapid/confidentialitate");
   await expect(page.getByRole("heading", { name: "Politica de confidențialitate" })).toBeVisible();

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { MapsLink } from "@/components/maps-link";
 import { SiteFooter } from "@/components/site-footer";
@@ -9,10 +10,20 @@ import { turnstileSiteKey } from "@/server/security/turnstile";
 import { resolvePublicTenant, withTenant } from "@/server/tenant";
 import { BookingWizard } from "./booking-wizard";
 
-export const metadata: Metadata = {
-  title: "Programare online",
-  description: "Programează-te online la service, în mai puțin de un minut.",
-};
+// Imaginea din previzualizarea linkului (WhatsApp, Facebook): pictograma aplicației.
+// Adresa trebuie să fie completă, din APP_BASE_URL, citită la cerere (nu la build).
+export async function generateMetadata(): Promise<Metadata> {
+  await connection();
+  const base = process.env.APP_BASE_URL;
+  return {
+    title: "Programare online",
+    description: "Programează-te online la service, în mai puțin de un minut.",
+    ...(base && {
+      metadataBase: new URL(base),
+      openGraph: { images: [{ url: "/icons/icon-512.png", width: 512, height: 512, type: "image/png" }] },
+    }),
+  };
+}
 
 // Pagina publică a unui service (ex. /roti-rapid). Datele vin din baza de date la fiecare cerere,
 // deci tot conținutul stă într-un <Suspense> (cerință Next 16 cu Cache Components).
