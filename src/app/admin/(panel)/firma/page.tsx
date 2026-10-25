@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ActionForm } from "@/components/admin/action-form";
 import { AdminFrame, AdminSkeleton } from "@/components/admin/admin-frame";
+import { AutoUploadInput } from "@/components/admin/auto-upload-input";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, Field, PageTitle, ReviewBadge } from "@/components/admin/ui";
 import { formatRoPhone } from "@/lib/format";
@@ -39,8 +40,8 @@ async function Content() {
         )}
         <ActionForm action={uploadLogoAction}>
           <label className="flex flex-col gap-1 font-semibold">
-            Alege logo-ul (JPG, PNG sau WEBP, maxim 5 MB; cel mai bine pe fundal alb sau transparent)
-            <input type="file" name="logo" accept="image/jpeg,image/png,image/webp" required className="min-h-12 text-lg" />
+            Alege logo-ul (JPG, PNG sau WEBP, maxim 5 MB; cel mai bine pe fundal alb sau transparent). Se încarcă imediat ce îl alegi.
+            <AutoUploadInput name="logo" />
           </label>
           <SubmitButton pendingText="Se încarcă…">Încarcă logo-ul</SubmitButton>
         </ActionForm>
@@ -61,8 +62,8 @@ async function Content() {
         )}
         <ActionForm action={uploadFacadeAction}>
           <label className="flex flex-col gap-1 font-semibold">
-            Alege o poză (JPG, PNG sau WEBP, maxim 5 MB)
-            <input type="file" name="poza" accept="image/jpeg,image/png,image/webp" required className="min-h-12 text-lg" />
+            Alege o poză (JPG, PNG sau WEBP, maxim 5 MB). Se încarcă imediat ce o alegi.
+            <AutoUploadInput name="poza" />
           </label>
           <SubmitButton pendingText="Se încarcă…">Încarcă poza</SubmitButton>
         </ActionForm>
@@ -102,7 +103,7 @@ async function Content() {
               min={6}
               max={120}
               defaultValue={tenant.retentionMonths}
-              hint="Programările mai vechi se vor șterge automat (Faza 6). Implicit 24 de luni."
+              hint="Programările mai vechi se șterg automat, în fiecare noapte. Implicit 24 de luni."
             />
           </div>
           <SubmitButton>Salvează datele</SubmitButton>

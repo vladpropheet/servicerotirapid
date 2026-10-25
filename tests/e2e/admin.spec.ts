@@ -58,8 +58,9 @@ test("patronul intră cu parola temporară, o schimbă, modifică un preț și �
   // Logo-ul: încărcat din „Datele firmei”, apare pe pagina publică în locul numelui, apoi se scoate.
   const logo = await sharp({ create: { width: 600, height: 200, channels: 3, background: "#C2410C" } }).png().toBuffer();
   await page.goto("/admin/firma");
+  // Se încarcă singur, imediat ce e ales fișierul (fără să mai apeși butonul).
+  await page.waitForLoadState("networkidle"); // pagina e interactivă (ca un om care alege fișierul după ce s-a încărcat)
   await page.locator('input[name="logo"]').setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: logo });
-  await page.getByRole("button", { name: "Încarcă logo-ul" }).click();
   await expect(page.getByText("Logo-ul a fost salvat", { exact: false })).toBeVisible();
   await page.goto("/roti-rapid");
   const logoImage = page.getByRole("img", { name: "Service Roți Rapid" });
